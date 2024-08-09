@@ -28,10 +28,14 @@ if True:
         os.chdir(f"C:/ElmerFEm/ElmerFEM/bin")
         os.system(f'elmergrid 8 2 {project_name}/temp_save.unv -autoclean -out {project_name}/dummy')
         os.system(f'elmersolver > {project_name}/convergence_log.log 2>&1')
+
         #copying and saving of design, results and logs to relative folders
         shutil.copy(f"{project_name}/temp_save.unv" , f"../../../Projects/Projects/{project_name}/UNV/{V}.unv")
         shutil.copy(f"{project_name}/case_t0001.vtu" , f"../../../Projects/Projects/{project_name}/VTU/{V}.vtu")
         shutil.copy(f"{project_name}/convergence_log.log" , f"../../../Projects/Projects/{project_name}/Logs/{V}.log")
+        #Run Paraview to process output data
+        os.chdir("C:/Paraview/Paraview/bin")
+        os.system(f"pvbatch.exe ./Perry_Paraview.py {project_name} {V}")
         os.chdir("../../..")
 else:
     pass

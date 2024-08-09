@@ -28,9 +28,5 @@ os.system(f"python Perry_active.py {project_name} {v0} {v1} {delv}")
 #Run Salome to read input CSV and generate the .UNV files stored in an Elmer folder
 #After simuation the script writes the final part of the case.sif file with the calculated lowest 
 #boundary index
-#redirect to paraview, execute paraview script
-os.chdir("C:/Paraview/Paraview/bin")
-os.system(f"pvbatch.exe ./Perry_Paraview.py {project_name}")
 os.chdir(f"../../../Projects/Projects/{project_name}")
 os.system(f"python ./XPythonPostProcessing.py")
-
