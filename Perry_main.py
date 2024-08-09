@@ -10,6 +10,20 @@ from origin_write import MySemiconductor
 #Get User input for project name
 project_name = input("What is the name of your project?")
 
+
+print('Which variable would you like to sweep?')
+
+
+truth_val = True
+
+while True:
+    try:
+        sweeping_V = int(input("'1 - no. of ridges \n 2 - device x \n 3 - device y \n 4 - device z \n 4 - heat sink temp \n 5 - mesh factor \n 6 - ridge height \n '"))
+        break
+    except:
+        print("You did not enter an integer")
+
+
 #create results ,logs and input data directory
 #Perry_1 -directories and copying of input and processing files
 
