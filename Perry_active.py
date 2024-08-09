@@ -11,7 +11,7 @@ from origin_write import MySemiconductor
 
 project_name = sys.argv[1]
 v0 = float(sys.argv[2]) ; v1 = float(sys.argv[3]) ;delv = float(sys.argv[4])
-
+sweeping_V = int(sys.argv[5]) #getting sweeping parameter index
 variable = np.arange(v0 , v1, delv)
 
 if True:
@@ -22,7 +22,7 @@ if True:
 
         #get ready to run salome
         os.chdir('../..')
-        os.system(f"SALOME-9.12.0\W64\Python\python3.exe SALOME-9.12.0\salome -t Perry_Salome.py args:{project_name},{V}")
+        os.system(f"SALOME-9.12.0\W64\Python\python3.exe SALOME-9.12.0\salome -t Perry_Salome.py args:{project_name},{V},{sweeping_V}")
 
         #get ready for elmer
         os.chdir(f"C:/ElmerFEm/ElmerFEM/bin")
