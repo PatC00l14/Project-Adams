@@ -35,7 +35,7 @@ if True:
         shutil.copy(f"{project_name}/convergence_log.log" , f"../../../Projects/Projects/{project_name}/Logs/{V}.log")
         #Run Paraview to process output data
         os.chdir("C:/Paraview/Paraview/bin")
-        os.system(f"pvbatch.exe ./Perry_Paraview.py {project_name} {V}")
+        os.system(f"pvbatch.exe ./Perry_Paraview.py {project_name} {V} {sweeping_V}")
         os.chdir("../../..")
 else:
     pass

@@ -23,6 +23,23 @@ while True:
     except:
         print("You did not enter an integer")
 
+if sweeping_V == 1:
+    pass_string = 'n_ridges'
+elif sweeping_V ==2:
+    pass_string = 'box_x'
+elif sweeping_V == 3:
+    pass_string = 'box_y'
+elif sweeping_V == 4:
+    pass_string = 'box_z'
+elif sweeping_V == 5:
+    pass_string = 'T_sink'
+elif sweeping_V == 6:
+    pass_string = 'mesh_factor'
+elif sweeping_V == 7:
+    pass_string = 'z_ridge'
+
+
+
 
 #create results ,logs and input data directory
 #Perry_1 -directories and copying of input and processing files
@@ -31,9 +48,9 @@ os.chdir(f"C:/Projects/Perry_run")
 os.system(f'python Perry_1.py {project_name}')
 
 #Variable to sweep over
-v0 = 150 #initial
-v1 = 300 #final
-delv = 50 #step
+v0 = 170 #initial
+v1 = 180 #final
+delv = 5 #step
 
 #os.system(f"python ./global_write.py {project_name}")
 #Change working directory to C: drive for Salome
