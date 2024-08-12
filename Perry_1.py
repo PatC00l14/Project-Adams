@@ -6,7 +6,7 @@ import sys
 import os
 import shutil
 project_name = sys.argv[1] #pass project name as the first and only argument to the file
-
+pass_string = sys.argv[2]
 
 if not os.path.exists(f'C:/Projects/Projects/{project_name}'): #if already made don't create the new directory
     os.mkdir(f'C:/Projects/Projects/{project_name}')
@@ -25,7 +25,9 @@ else:
 os.system("pause")
 
 #make a copy of the input data  and transfer the python processing script over to the results folder
-shutil.copy(f'../bin/Input_csv.csv', f'../Projects//{project_name}/Input_data/input_csv.csv')
+shutil.copy(f'../bin/Input_csv.csv', f'../Projects//{project_name}/Input_data/input_{pass_string}.csv')
 shutil.copy(f"../bin/XPythonPostProcessing.py" ,  f"../Projects/{project_name}/XPythonPostProcessing.py")
+shutil.copy(f'Perry_Paraview.py' , f'../../Paraview/Paraview/bin/Perry_Paraview.py')
+shutil.copy(f'Perry_Salome.py' , '../../SALOME-9.12.0/W64/Python/Parry_Salome.py')
 os.system(f'echo > C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif')
 #Python script to write up the first part of the case.sif file which Elmer reads to complete
