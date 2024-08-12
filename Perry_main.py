@@ -49,7 +49,7 @@ os.system(f'python Perry_1.py {project_name}')
 
 #Variable to sweep over
 v0 = 170 #initial
-v1 = 180 #final
+v1 = 200 #final
 delv = 5 #step
 
 #os.system(f"python ./global_write.py {project_name}")
