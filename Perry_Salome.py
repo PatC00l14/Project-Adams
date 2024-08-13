@@ -148,7 +148,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
 
         no_in_submesh = 1 #need a counter for how many objects are going to be in the device
 
-        back_facet_array = np.array([0.219 ,0.97 , 0.165,0.97 , 0.165,0.97 , 0.165,0.97]) #back facet thickness
+        back_facet_array = np.array([0.219 ,0.097 , 0.165,0.097 , 0.165,0.097 , 0.165,0.097]) #back facet thickness
         
         if data.ffront_mat != 0 or data.fback_mat !=0:#no facet coating present
             #create and move front facets
@@ -162,16 +162,14 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
                 if bf==0:
                     back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[i], box_z) #create back facet to cover front of the box
                     back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y , 0 )#move infront of the device
+                    partition_dummy2 = np.append(partition_dummy2 , back_facet)
                 else:
                     back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[i], box_z) #create back facet to cover front of the box
                     back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y + back_facet_array[:i] , 0 )#move infront of the device
+                    partition_dummy2 = np.append(partition_dummy2 , back_facet)
 
 
-
-            back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , data.fback_y, box_z) #create back facet to cover front of the box
-            back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y , 0 )#move infront of the device
-            partition_dummy2 = np.append(partition_dummy2 , back_facet)
-            no_in_submesh += 2 #tells the submesh that we also have two other objects to include
+            no_in_submesh += len(back_facet_array) + 1 #tells the submesh that we also have two other objects to include
         else:
             pass
 
@@ -199,7 +197,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         #we want anything that is NOT a ridge to be here ie facets, base , heat sinks 
         #sub mesh is actually coarser not finer, but we need the submesh to be calculated first 
         #to avoid overmeshing on the base and at the facets
-        geompy.UnionList(sub_mesh_auto_group, partition_exploded[- no_in_submesh:])
+        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-no_in_submesh:])
     
         
         #partition together just the ridge. Assuming the ridge has the same layer geometry for each ridge

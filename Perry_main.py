@@ -43,9 +43,9 @@ elif sweeping_V == 7:
 
 
 #Variable to sweep over
-v0 = 1 #initial
-v1 = 5 #final
-delv = 1 #step
+v0 = 200 #initial
+v1 = 250 #final
+delv = 50 #step
 
 
 #create results ,logs and input data directory
