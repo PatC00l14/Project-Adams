@@ -147,6 +147,8 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         partition_dummy2 = np.append(partition_dummy2 , Base)
 
         no_in_submesh = 1 #need a counter for how many objects are going to be in the device
+
+        back_facet_array = np.array([0.219 ,0.97 , 0.165,0.97 , 0.165,0.97 , 0.165,0.97]) #back facet thickness
         
         if data.ffront_mat != 0 or data.fback_mat !=0:#no facet coating present
             #create and move front facets
@@ -154,7 +156,19 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
             front_facet = geompy.MakeTranslation(front_facet ,0 ,-data.ffront_y , 0 )#move infront of the device
             partition_dummy2 = np.append(partition_dummy2 , front_facet )
             #create and move back facets
-            back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , data.fback_y, box_z) #create front facet to cover front of the box
+
+
+            for bf in range(0,len(back_facet_array)):
+                if bf==0:
+                    back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[i], box_z) #create back facet to cover front of the box
+                    back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y , 0 )#move infront of the device
+                else:
+                    back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[i], box_z) #create back facet to cover front of the box
+                    back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y + back_facet_array[:i] , 0 )#move infront of the device
+
+
+
+            back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , data.fback_y, box_z) #create back facet to cover front of the box
             back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y , 0 )#move infront of the device
             partition_dummy2 = np.append(partition_dummy2 , back_facet)
             no_in_submesh += 2 #tells the submesh that we also have two other objects to include
