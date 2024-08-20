@@ -160,12 +160,12 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
 
             for bf in range(0,len(back_facet_array)):
                 if bf==0:
-                    back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[i], box_z) #create back facet to cover front of the box
+                    back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[bf], box_z) #create back facet to cover front of the box
                     back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y , 0 )#move infront of the device
                     partition_dummy2 = np.append(partition_dummy2 , back_facet)
                 else:
-                    back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[i], box_z) #create back facet to cover front of the box
-                    back_facet = geompy.MakeTranslation(back_facet ,0 ,box_y + back_facet_array[:i] , 0 )#move infront of the device
+                    back_facet = geompy.MakeBoxDXDYDZ(box_x * n_active , back_facet_array[bf], box_z) #create back facet to cover front of the box
+                    back_facet = geompy.MakeTranslation(back_facet , 0 , box_y + np.sum(back_facet_array[:bf]) , 0 )#move infront of the device
                     partition_dummy2 = np.append(partition_dummy2 , back_facet)
 
 
