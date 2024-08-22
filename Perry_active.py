@@ -12,13 +12,18 @@ from origin_write import MySemiconductor
 project_name = sys.argv[1]
 v0 = float(sys.argv[2]) ; v1 = float(sys.argv[3]) ;delv = float(sys.argv[4])
 sweeping_V = int(sys.argv[5]) #getting sweeping parameter index
-variable = np.arange(v0 , v1, delv)
+
+
+if delv ==0: #when the simulation is not sweeping a variable
+    variable = np.array([0])
+else:
+    variable = np.arange(v0 , v1, delv)
 
 if True:
     for V in variable:
         #Clear and write bulk of case.sif
         os.chdir('C:/Projects/bin')
-        os.system(f"python global_write.py {project_name}")
+        os.system(f"python global_write.py {project_name} {sweeping_V} {V}")
 
         #get ready to run salome
         os.chdir('../..')

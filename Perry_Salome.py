@@ -66,8 +66,8 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         
         [box_x , box_y , box_z] = data.device_dim #device dimensions in um
     
-        m1 = data.r_mesh
-        m2 = data.bdy_mesh
+        ridge_mesh_fac = data.r_mesh
+        body_mesh_fac = data.bdy_mesh
     
         [sinkx, sinky , sinkz] = data.ext_sink_dim
     
@@ -242,20 +242,20 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         GMSH = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH)
         Gmsh_Parameters = GMSH.Parameters()
         Gmsh_Parameters.Set2DAlgo( 0 )
-        Gmsh_Parameters.SetMinSize( 0 )
-        Gmsh_Parameters.SetMaxSize( 1e+22 )
-        Gmsh_Parameters.SetSizeFactor( m1) #RIDGE MESH
+        Gmsh_Parameters.SetMinSize( 0 ) #minimum mesh size
+        Gmsh_Parameters.SetMaxSize( 1e+22 ) #maximum mesh size 
+        Gmsh_Parameters.SetSizeFactor( ridge_mesh_fac) #RIDGE MESH
         Gmsh_Parameters.SetIs2d( 0 )
     
     
         #Auto_group_for_Sub_mesh_1_2 = Mesh_1.GroupOnGeom(Auto_group_for_Sub_mesh_1,'Auto_group_for_Sub-mesh_1',SMESH.VOLUME)
         
-        GMSH_1_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH,geom = sub_mesh_auto_group)
+        GMSH_1_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH , geom = sub_mesh_auto_group)
         Gmsh_Parameters_1 = GMSH_1_1.Parameters()
         Gmsh_Parameters_1.Set2DAlgo( 0 )
-        Gmsh_Parameters_1.SetMinSize( 0 )
-        Gmsh_Parameters_1.SetMaxSize( 1e+22 )
-        Gmsh_Parameters_1.SetSizeFactor( m2 ) #BODY MESH
+        Gmsh_Parameters_1.SetMinSize( 0 ) #minimum mesh size
+        Gmsh_Parameters_1.SetMaxSize( 1e+22 ) #maximum mesh size
+        Gmsh_Parameters_1.SetSizeFactor( body_mesh_fac ) #BODY MESH
         Gmsh_Parameters_1.SetIs2d( 0 )
         
         isDone = Mesh_1.Compute()
@@ -336,7 +336,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
 
     mypath = f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/'
     sif_directory = os.path.join(mypath , 'case.sif')
-    write_boundary_conds(face_of_god, sif_directory , T_sink = device.T_sink, boundaries2= open_string)
+    write_boundary_conds(face_of_god, sif_directory , T_sink = device.T_sink, boundaries2= 0) #can add convection boundaries if interested
 
     return(face_of_god)
     

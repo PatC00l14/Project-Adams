@@ -18,9 +18,39 @@ if not os.path.exists(f'C:/Projects/Projects/{project_name}'): #if already made 
     os.mkdir(f'C:/Projects/Projects/{project_name}/VTU')
     os.mkdir(f'C:/Projects/Projects/{project_name}/CSV')
 
-    print(f"Directory {project_name} created - continue?")
+    while True:
+        try:
+            print('######################################################################')
+            continue_YN = str(input(f"Directory {project_name} created - continue Y/N?"))
+            print('######################################################################')
+            if continue_YN == 'Y' or continue_YN == 'y':
+                break
+            elif continue_YN == 'N' or continue_YN == 'n':
+                sys.exit()
+            else:
+                print('Invlaid input. Enter Y,y to continue or N,n to exit')
+        except:
+            print('some error')
+
 else:
-    print("Directory already been used - continue anyway?")
+    while True:
+        try:
+            print('######################################################################')
+            print("Directory with this name has already been created - continue anyway? Y/N")
+            print('######################################################################')
+            continue_YN = str(input('Yy/Nn')) #need option to pull out here
+            if continue_YN == 'Y' or continue_YN == 'y':
+                break
+            elif continue_YN == 'N' or continue_YN == 'n':
+                print("Too bad I can\'t seem to terminate the script early \n Just close the terminal and start again")
+                break
+            else:
+                print('Invlaid input. Enter Y,y to continue or N,n to exit')
+
+        except:
+            print('some error')
+
+
 
 os.system("pause")
 
