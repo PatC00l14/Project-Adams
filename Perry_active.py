@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 sys.path.append('C:/Projects/bin')
-from origin_write import MySemiconductor
+#from origin_write import MySemiconductor
 
 #import device data using MySemiconductor class - to be called from other programs
 
@@ -27,7 +27,7 @@ if True:
 
         #get ready to run salome
         os.chdir('../..')
-        os.system(f"SALOME-9.12.0\W64\Python\python3.exe SALOME-9.12.0\salome -t Perry_Salome.py args:{project_name},{V},{sweeping_V}")
+        os.system(f"SALOME-9.12.0\W64\Python\python3.exe SALOME-9.12.0\salome -t Perry_Salome_falcon.py args:{project_name},{V},{sweeping_V}")
 
         #get ready for elmer
         os.chdir(f"C:/ElmerFEm/ElmerFEM/bin")
@@ -40,7 +40,7 @@ if True:
         shutil.copy(f"{project_name}/convergence_log.log" , f"../../../Projects/Projects/{project_name}/Logs/{V}.log")
         #Run Paraview to process output data
         os.chdir("C:/Paraview/Paraview/bin")
-        os.system(f"pvbatch.exe ./Perry_Paraview.py {project_name} {V} {sweeping_V}")
+        os.system(f"pvbatch.exe ./Perry_Paraview_falcon.py {project_name} {V} {sweeping_V}")
         os.chdir("../../..")
 else:
     pass
