@@ -12,11 +12,8 @@ def main():
     #Get User input for project name to be used to create directories and results locations
     project_name = input("What is the name of your project?")
     
-    
     print('Which variable would you like to sweep?')
-    
 
-    
     while True:
         try:
             sweeping_V = int(input("'\n0 - no sweep \n1 - no. of ridges \n 2 - device x \n 3 - device y \n 4 - device z \n 5 - heat sink temp \n 6 - mesh factor \n 7 - ridge height \n 8 - Power Sweep \n'"))
@@ -43,7 +40,6 @@ def main():
                 else:
                     print('I have no idea how on earth this error message could\'ve been reached')
                 
-
             except:
                 print("Enter a valid value")
     else:

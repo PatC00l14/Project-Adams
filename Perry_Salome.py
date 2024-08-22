@@ -179,6 +179,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
             AlN_base = geompy.MakeTranslation(AlN_base , -0.5* (sinkx - box_x*n_active),-0.5*(sinky - box_y),-sinkz) #subtract the hanging distance off
             partition_dummy2 = np.append(partition_dummy2 , AlN_base)
             no_in_submesh += 1 #adds another object (if so) to be sub-meshed
+            #-0.5*(sinky - box_y)
         else:
             pass
     
@@ -293,20 +294,23 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
 
             if data.ffront_mat != 0 or data.fback_mat !=0: #facets are present - go on to include convection boundary conditions
 
-                if BBox.maxZ == BBox.minZ and BBox.maxZ == box_z and (BBox.maxX - BBox.minX) > 10:#found right/left/front/back/top side open faces
+                if BBox.maxZ == BBox.minZ and BBox.maxZ == box_z and BBox.maxZ == box_y: #top faces of the device
                     open_boundary = np.append(open_boundary , i)
                 else:
                     pass
             
                 if BBox.maxX == BBox.minX and BBox.minX == 0: #get x+ and x- open faces
-                    open_boundary = np.append(open_boundary , i)
+                    pass
+                    #open_boundary = np.append(open_boundary , i)
                 elif BBox.maxX == BBox.minX and BBox.maxX == n_active*box_x:
-                    open_boundary = np.append(open_boundary , i)
-    
+                    #open_boundary = np.append(open_boundary , i)
+                    pass
                 if BBox.maxY == BBox.minY and BBox.maxY == box_y + data.fback_y: #open back facet
-                    open_boundary = np.append(open_boundary , i)
+                    #open_boundary = np.append(open_boundary , i)
+                    pass
                 elif  BBox.maxY == BBox.minY and BBox.minY == -data.ffront_y: #open front facet
-                    open_boundary = np.append(open_boundary , i)
+                    #open_boundary = np.append(open_boundary , i)
+                    pass
                 else:
                     pass
 

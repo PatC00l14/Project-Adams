@@ -6,7 +6,7 @@ import sys
 import os
 import shutil
 project_name = sys.argv[1] #pass project name as the first and only argument to the file
-pass_string = sys.argv[2]
+pass_string = sys.argv[2] #index of sweeping parameter
 
 if not os.path.exists(f'C:/Projects/Projects/{project_name}'): #if already made don't create the new directory
     os.mkdir(f'C:/Projects/Projects/{project_name}')
