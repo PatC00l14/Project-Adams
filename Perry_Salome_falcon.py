@@ -200,7 +200,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         #we want anything that is NOT a ridge to be here ie facets, base , heat sinks 
         #sub mesh is actually coarser not finer, but we need the submesh to be calculated first 
         #to avoid overmeshing on the base and at the facets
-        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-no_in_submesh:])
+        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-no_in_submesh+1:])
     
         
         #partition together just the ridge. Assuming the ridge has the same layer geometry for each ridge

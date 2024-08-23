@@ -10,7 +10,7 @@ paraview.simple._DisableFirstRenderCameraReset()
 sys.path.append('C:/Projects/bin')
 from origin_write import MySemiconductor #import semiconductor class
 
-
+commit = 'commit'
 
 device = pd.read_csv('C:/Projects/bin/input_csv.csv').to_numpy()
 device = MySemiconductor(device)
