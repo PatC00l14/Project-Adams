@@ -16,7 +16,7 @@ def main():
 
     while True:
         try:
-            sweeping_V = int(input("'\n0 - no sweep \n1 - no. of ridges \n 2 - device x \n 3 - device y \n 4 - device z \n 5 - heat sink temp \n 6 - mesh factor \n 7 - ridge height \n 8 - Power Sweep \n'"))
+            sweeping_V = int(input("'\n0 - no sweep \n1 - no. of ridges \n 2 - device x \n 3 - device y \n 4 - device z \n 5 - heat sink temp \n 6 - mesh factor \n 7 - ridge height \n 8 - Power Sweep \n 9 - arbitrary sweep \n 10 - Device index on/off \n '"))
             break
         except:
             print("You did not enter an integer")
@@ -64,7 +64,10 @@ def main():
         pass_string = 'z_ridge'
     elif sweeping_V == 8:
         pass_string = 'Power'
-    
+    elif sweeping_V == 9:
+        pass_string = 'Arb_sweep'
+    elif sweeping_V == 10:
+        pass_string = 'Device index on/off'
     
     #Variable to sweep over
     #v0 = 100 #initial
@@ -88,6 +91,12 @@ def main():
     #boundary index
     os.chdir(f"../../../Projects/Projects/{project_name}")
     os.system(f"python ./XPythonPostProcessing.py {sweeping_V}")
+
+
+    print('########################################################')
+    print(f'Project: {project_name} complete')
+    print('########################################################')
+
 
     return(0)
 

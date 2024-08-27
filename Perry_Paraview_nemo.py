@@ -115,31 +115,36 @@ def save_data(f_name):
     
     
     # Properties modified on plotOverLine1
-    
+    LinesX = np.array([])
     LinesY = np.array([])
     LinesZ = np.array([])
 
     [dx ,dy ,dz] = device.device_dim *10**-6
-    dz = 99.5*10**-6
+    dz = 199.5*10**-6
 
     dx = 125*10**-6
 
     for i in range(0, device.n_ridges):
+
+        x_pos = (125 + i*250)*10**-6
         
         LinesY = np.append(LinesY , PlotOverLine(registrationName=f'PlotOverLine{i}', Input=solved_object))
-        LinesY[i].Point1 = [dx + (i * 50*10**-6) , 0 , dz] ; LinesY[i].Point2 = [dx + (i * 50*10**-6) , dy, dz]
+        LinesY[i].Point1 = [x_pos , 0 , dz] ; LinesY[i].Point2 = [x_pos , dy, dz]
         SaveData(f'C:/Projects/Projects/{arg0}/CSV/{V}_{i}_Y.csv', LinesY[i], PointDataArrays=['temperature'])
 
 
         if device.ext_sink_mat == 0:
             LinesZ = np.append(LinesZ , PlotOverLine(registrationName=f'PlotOverLine{i}', Input=solved_object))        
-            LinesZ[i].Point1 = [dx + (i * 50*10**-6) , 0 , 0] ; LinesZ[i].Point2 = [dx + (i * 50*10**-6) , 0, dz]      
+            LinesZ[i].Point1 = [x_pos , 0 , 0] ; LinesZ[i].Point2 = [x_pos , 0, dz]      
         else:
             LinesZ = np.append(LinesZ , PlotOverLine(registrationName=f'PlotOverLine{i}', Input=solved_object))        
-            LinesZ[i].Point1 = [dx + (i * 50*10**-6) , 0 , 0] ; LinesZ[i].Point2 = [dx + (i * 50*10**-6) , 0, dz]  
-        
+            LinesZ[i].Point1 = [x_pos, 0 , 0] ; LinesZ[i].Point2 = [x_pos , 0, dz]  
+
         SaveData(f'C:/Projects/Projects/{arg0}/CSV/{V}_{i}_Z.csv', LinesZ[i], PointDataArrays=['temperature'])
 
+    LinesX = np.append(LinesX , PlotOverLine(registrationName=f'PlotOverLine{i}', Input=solved_object))
+    LinesX[0].Point1 = [0 , dy /2  , dz] ; LinesX[0].Point2 = [device.device_dim[0] *10**-6 * device.n_ridges , dy/2, dz]
+    SaveData(f'C:/Projects/Projects/{arg0}/CSV/{V}_{0}_X.csv', LinesX[0], PointDataArrays=['temperature'])
 
     return(0)
 

@@ -129,17 +129,18 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         multi_ridge = geompy.MakePartition(partition_dummy, [], [], [], geompy.ShapeType["SOLID"], 0, [], 0) #ridge - final product for us now
         
         
-        Base = geompy.MakeBoxDXDYDZ(box_x * n_active , box_y, box_z) # create the the base
+        Base = geompy.MakeBoxDXDYDZ(box_x * n_active + 250 , box_y, box_z) # create the the base
         
 
         if data.nitride_cover != 0 :
-            Nitride_cover = geompy.MakeBoxDXDYDZ(box_x * n_active , box_y, 0.25) #create a nitride layer to sit on top
-            Nitride_cover = geompy.MakeTranslation(Nitride_cover,0 , 0,box_z )
-            Base = geompy.MakeTranslation(Base ,0 , 0,1 ) #shift box up to allow some medium / thermal paste 
-            thermal_paste = geompy.MakeBoxDXDYDZ(box_x * n_active , box_y, 1)
+            Nitride_cover = geompy.MakeBoxDXDYDZ(box_x * n_active + 250, box_y, 0.25) #create a nitride layer to sit on top
+            Nitride_cover = geompy.MakeTranslation(Nitride_cover,-125 , 0,box_z )
             pass
         else:
             pass
+        Base = geompy.MakeTranslation(Base ,-125 , 0,1 ) #shift box up to allow some medium / thermal paste 
+        thermal_paste = geompy.MakeBoxDXDYDZ(box_x * n_active + 250, box_y, 1)
+        thermal_paste = geompy.MakeTranslation(thermal_paste , -125 , 0 , 0)
         #300um Falcon base
         
     
@@ -149,18 +150,23 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         partition_dummy2 = []
         
         for i in range(0, n_active):
-            x_pos = 125 + (50 * i) #want each active region in its own device ~250um so separation is 250um in total
+            x_pos = box_x/2 + (box_x * i) #want each active region in its own device ~250um so separation is 250um in total
             multi_ridge_cut = geompy.MakeTranslation(multi_ridge , x_pos, 0 , z_ridge) #this is actually our final object we want to work with
 
             Base = geompy.MakeCut(Base, multi_ridge_cut, True) #Final box is sorted now
 
-            Nitride_cover  = geompy.MakeCut(Nitride_cover, multi_ridge_cut, True)
-
+            if data.nitride_cover != 0:
+                Nitride_cover  = geompy.MakeCut(Nitride_cover, multi_ridge_cut, True)
+            else:
+                pass
             partition_dummy2 = np.append(partition_dummy2 , multi_ridge_cut) #add ridge in new location to the partition
         
         
         partition_dummy2 = np.append(partition_dummy2 , Base)
-        partition_dummy2 = np.append(partition_dummy2 , Nitride_cover)
+        if data.nitride_cover !=0:
+            partition_dummy2 = np.append(partition_dummy2 , Nitride_cover)
+        else:
+            pass
         partition_dummy2 = np.append(partition_dummy2 , thermal_paste)
 
         no_in_submesh = 1 #need a counter for how many objects are going to be in the device
@@ -193,7 +199,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
 
         if device.ext_sink_mat != 0: #create external heat sink
             AlN_base = geompy.MakeBoxDXDYDZ(sinkx, sinky, sinkz)
-            AlN_base = geompy.MakeTranslation(AlN_base , -0.5* (sinkx - box_x*n_active),-1,-sinkz) #subtract the hanging distance off
+            AlN_base = geompy.MakeTranslation(AlN_base , -0.5* (sinkx - box_x*n_active), data.device_arb_parameter ,-sinkz) #subtract the hanging distance off
             partition_dummy2 = np.append(partition_dummy2 , AlN_base)
             no_in_submesh += 1 #adds another object (if so) to be sub-meshed
             #-0.5*(sinky - box_y)
@@ -370,8 +376,11 @@ arg0 = sys.argv[1] #project name - can also take in more arguments if necessary
 V = float(sys.argv[2]) #input variable
 sweeping_V = int(sys.argv[3])
 
+
+
 pandas_data = pd.read_csv('C:/Projects/bin/input_csv.csv').to_numpy()
 device = MySemiconductor(pandas_data) #put data into MySemiconductor class
+device.device_arb_parameter = -1 #placeholder to have the device ridge slightly not off the edge of the whole thing
 
 if sweeping_V == 1:
     device.n_ridges = V
@@ -397,5 +406,7 @@ elif sweeping_V == 7:
     pass_string = 'z_ridge'
 elif sweeping_V ==0:
     pass
+elif sweeping_V == 9:
+    device.device_arb_parameter = V
 
 new_mesh_ext_sink(device)

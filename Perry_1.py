@@ -57,9 +57,9 @@ os.system("pause")
 #make a copy of the input data  and transfer the python processing script over to the results folder
 shutil.copy(f'../bin/Input_csv.csv', f'../Projects//{project_name}/Input_data/input_{pass_string}.csv')
 shutil.copy(f"../bin/XPythonPostProcessing.py" ,  f"../Projects/{project_name}/XPythonPostProcessing.py")
-shutil.copy(f'Perry_Paraview_falcon.py' , f'../../Paraview/Paraview/bin/Perry_Paraview_falcon.py')
+shutil.copy(f'Perry_Paraview_nemo.py' , f'../../Paraview/Paraview/bin/Perry_Paraview_nemo.py')
 
-shutil.copy(f'C:/Projects/Perry_run/Perry_Salome_falcon.py' , 'C:/SALOME-9.12.0/W64/Python/Perry_Salome_falcon.py')
+shutil.copy(f'C:/Projects/Perry_run/Perry_Salome_nemo.py' , 'C:/SALOME-9.12.0/W64/Python/Perry_Salome_nemo.py')
 
 os.system(f'echo > C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif')
 #Python script to write up the first part of the case.sif file which Elmer reads to complete
