@@ -120,7 +120,10 @@ def save_data(f_name):
     LinesZ = np.array([])
 
     [dx ,dy ,dz] = device.device_dim *10**-6
-    dz = 199.5*10**-6
+    dz = 99.5*10**-6
+
+    dy = 2000*10**-6
+
 
     dx = 125*10**-6
 

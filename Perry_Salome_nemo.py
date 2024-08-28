@@ -108,21 +108,24 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         for i in range(0,len(thicknesses)):
             if i ==0: #first ridge
                 ridge = geompy.MakeBoxDXDYDZ(widths[i], lengths[i] ,  thicknesses[i]) #get ridge depth AND height
-                ridge = geompy.MakeTranslation(ridge, -widths[i]/2,(box_y - lengths[i]) / 2, 0) #centre the origin 
-                partition_dummy = np.append(partition_dummy ,  ridge)#
+                ridge = geompy.MakeTranslation(ridge, -widths[i]/2,0, 0) #centre the origin 
+                partition_dummy = np.append(partition_dummy ,  ridge)
                 geompy.addToStudy(ridge , f'ridge{i}')
             elif i == len(thicknesses)-1: #last ridge ie heater ridge - centre on the device
                 ridge = geompy.MakeBoxDXDYDZ(widths[i], lengths[i] , thicknesses[i]) #create box
-                ridge = geompy.MakeTranslation(ridge, -widths[i]/2, (box_y - lengths[i]) / 2, z_height + thicknesses[i-1]) #shift all half width back to center origin at symmetry centre
+                ridge = geompy.MakeTranslation(ridge, -widths[i]/2, 0, z_height + thicknesses[i-1]) #shift all half width back to center origin at symmetry centre
                 partition_dummy = np.append(partition_dummy ,  ridge)
                 z_height += thicknesses[i-1]
                 geompy.addToStudy(ridge , f'ridge{i}')  
             else:
-                ridge = geompy.MakeBoxDXDYDZ(widths[i], box_y , thicknesses[i]) #create box
+                ridge = geompy.MakeBoxDXDYDZ(widths[i], box_y - 330 , thicknesses[i]) #create box
                 ridge = geompy.MakeTranslation(ridge, -widths[i]/2,0, z_height + thicknesses[i-1]) #shift all half width back to center origin at symmetry centre
                 partition_dummy = np.append(partition_dummy ,  ridge)
                 z_height += thicknesses[i-1]
                 geompy.addToStudy(ridge , f'ridge{i}')
+        
+        
+        
         
         partition_dummy = partition_dummy.tolist()
         
@@ -131,10 +134,19 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
 
         
         trench = geompy.MakeBoxDXDYDZ(10.0 , box_y , 11.0) #trench tool to cut the trenches from the base
-        back_fac_trench = geompy.MakeBoxDXDYDZ(10.0 , box_y , 11.0) #trench tool to cut the trenches from the base
+
+
+        back_fac_trench = geompy.MakeBoxDXDYDZ(box_x * n_active + 250 , 30 , 11.0) #trench tool to cut the trenches from the base
+        back_fac_trench = geompy.MakeTranslation(back_fac_trench , -125 , box_y-330, box_z - 10)
+
+        ridge_trench = geompy.MakeBoxDXDYDZ(22 , box_y - 330 , np.max(thicknesses)) #craete cutting tool for ridge trench - does not go through back monitors (obviously why would it blass throgh the detector)
+        ridge_trench = geompy.MakeTranslation( ridge_trench , -11 , 0 ,0)
 
         Base = geompy.MakeBoxDXDYDZ(box_x * n_active + 250 , box_y, box_z) # create the the base
-        
+        Base = geompy.MakeTranslation(Base ,-125 , 0,0 ) #shift box up to allow some medium / thermal paste 
+        Base = geompy.MakeCut(Base , back_fac_trench , True)
+
+
 
         if data.nitride_cover != 0 :
             Nitride_cover = geompy.MakeBoxDXDYDZ(box_x * n_active + 250, box_y, 0.25) #create a nitride layer to sit on top
@@ -142,7 +154,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
             pass
         else:
             pass
-        Base = geompy.MakeTranslation(Base ,-125 , 0,0 ) #shift box up to allow some medium / thermal paste 
+        
         #thermal_paste = geompy.MakeBoxDXDYDZ(box_x * n_active + 250, box_y, 1)
         #thermal_paste = geompy.MakeTranslation(thermal_paste , -125 , 0 , 0)
         #300um Falcon base
@@ -155,6 +167,10 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         
         for i in range(0, n_active):
             x_pos = box_x/2 + (box_x * i) #want each active region in its own device ~250um so separation is 250um in total
+
+            ridge_trench_cut = geompy.MakeTranslation( ridge_trench ,x_pos , 0 , box_z - np.max(thicknesses) )
+            Base = geompy.MakeCut(Base , ridge_trench_cut , True) #cut the ridge trenches
+
             multi_ridge_cut = geompy.MakeTranslation(multi_ridge , x_pos, 0 , z_ridge) #this is actually our final object we want to work with
             Base = geompy.MakeCut(Base, multi_ridge_cut, True) #Final box is sorted now
 
@@ -162,6 +178,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
                 Nitride_cover  = geompy.MakeCut(Nitride_cover, multi_ridge_cut, True)
             else:
                 pass
+
             partition_dummy2 = np.append(partition_dummy2 , multi_ridge_cut) #add ridge in new location to the partition
         
         for i in range(1 , n_active ):
@@ -177,7 +194,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
             partition_dummy2 = np.append(partition_dummy2 , Nitride_cover)
         else:
             pass
-        partition_dummy2 = np.append(partition_dummy2 , thermal_paste)
+        #partition_dummy2 = np.append(partition_dummy2 , thermal_paste)
 
         no_in_submesh = 1 #need a counter for how many objects are going to be in the device
 
