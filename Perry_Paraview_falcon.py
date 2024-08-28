@@ -122,7 +122,7 @@ def save_data(f_name):
     [dx ,dy ,dz] = device.device_dim *10**-6
     dz = 99.5*10**-6
 
-    dx = 125*10**-6
+    dx = dx - 50 *10**-6
 
     for i in range(0, device.n_ridges):
         

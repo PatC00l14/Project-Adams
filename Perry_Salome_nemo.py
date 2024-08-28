@@ -128,7 +128,11 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         
         multi_ridge = geompy.MakePartition(partition_dummy, [], [], [], geompy.ShapeType["SOLID"], 0, [], 0) #ridge - final product for us now
         
+
         
+        trench = geompy.MakeBoxDXDYDZ(10.0 , box_y , 11.0) #trench tool to cut the trenches from the base
+        back_fac_trench = geompy.MakeBoxDXDYDZ(10.0 , box_y , 11.0) #trench tool to cut the trenches from the base
+
         Base = geompy.MakeBoxDXDYDZ(box_x * n_active + 250 , box_y, box_z) # create the the base
         
 
@@ -138,9 +142,9 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
             pass
         else:
             pass
-        Base = geompy.MakeTranslation(Base ,-125 , 0,1 ) #shift box up to allow some medium / thermal paste 
-        thermal_paste = geompy.MakeBoxDXDYDZ(box_x * n_active + 250, box_y, 1)
-        thermal_paste = geompy.MakeTranslation(thermal_paste , -125 , 0 , 0)
+        Base = geompy.MakeTranslation(Base ,-125 , 0,0 ) #shift box up to allow some medium / thermal paste 
+        #thermal_paste = geompy.MakeBoxDXDYDZ(box_x * n_active + 250, box_y, 1)
+        #thermal_paste = geompy.MakeTranslation(thermal_paste , -125 , 0 , 0)
         #300um Falcon base
         
     
@@ -152,7 +156,6 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         for i in range(0, n_active):
             x_pos = box_x/2 + (box_x * i) #want each active region in its own device ~250um so separation is 250um in total
             multi_ridge_cut = geompy.MakeTranslation(multi_ridge , x_pos, 0 , z_ridge) #this is actually our final object we want to work with
-
             Base = geompy.MakeCut(Base, multi_ridge_cut, True) #Final box is sorted now
 
             if data.nitride_cover != 0:
@@ -160,6 +163,13 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
             else:
                 pass
             partition_dummy2 = np.append(partition_dummy2 , multi_ridge_cut) #add ridge in new location to the partition
+        
+        for i in range(1 , n_active ):
+            x_pos_trench = box_x * i
+            trench_cut = geompy.MakeTranslation( trench , x_pos_trench , 0 , box_z - 10) #add trench between each active region
+            Base = geompy.MakeCut(Base , trench_cut, True)
+
+        
         
         
         partition_dummy2 = np.append(partition_dummy2 , Base)
@@ -221,7 +231,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         #we want anything that is NOT a ridge to be here ie facets, base , heat sinks 
         #sub mesh is actually coarser not finer, but we need the submesh to be calculated first 
         #to avoid overmeshing on the base and at the facets
-        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:])
+        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:]) #reverse order goes: Sink, base , ridges - chronological order
     
         
         #partition together just the ridge. Assuming the ridge has the same layer geometry for each ridge

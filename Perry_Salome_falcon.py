@@ -149,21 +149,28 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
         partition_dummy2 = []
         
         for i in range(0, n_active):
-            x_pos = 125 + (50 * i) #want each active region in its own device ~250um so separation is 250um in total
+            x_pos = (box_x/2 - 25) + (50 * i) #want each active region in its own device ~250um so separation is 250um in total
             multi_ridge_cut = geompy.MakeTranslation(multi_ridge , x_pos, 0 , z_ridge) #this is actually our final object we want to work with
 
             Base = geompy.MakeCut(Base, multi_ridge_cut, True) #Final box is sorted now
 
-            Nitride_cover  = geompy.MakeCut(Nitride_cover, multi_ridge_cut, True)
+            if data.nitride_cover != 0 :
+                Nitride_cover  = geompy.MakeCut(Nitride_cover, multi_ridge_cut, True)
+            else:
+                pass
 
             partition_dummy2 = np.append(partition_dummy2 , multi_ridge_cut) #add ridge in new location to the partition
         
         
         partition_dummy2 = np.append(partition_dummy2 , Base)
-        partition_dummy2 = np.append(partition_dummy2 , Nitride_cover)
-        partition_dummy2 = np.append(partition_dummy2 , thermal_paste)
 
-        no_in_submesh = 1 #need a counter for how many objects are going to be in the device
+        if data.nitride_cover != 0 :
+            partition_dummy2 = np.append(partition_dummy2 , Nitride_cover)
+            partition_dummy2 = np.append(partition_dummy2 , thermal_paste)
+        else:
+            pass
+
+        no_in_submesh = 1 #need a counter for how many objects are going to be in the device submesh
 
         back_facet_array = np.array([0.219 ,0.097 , 0.165,0.097 , 0.165,0.097 , 0.165,0.097]) #back facet thickness
         
