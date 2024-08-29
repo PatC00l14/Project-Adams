@@ -113,7 +113,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
                 geompy.addToStudy(ridge , f'ridge{i}')
             elif i == len(thicknesses)-1: #last ridge ie heater ridge - centre on the device
                 ridge = geompy.MakeBoxDXDYDZ(widths[i], lengths[i] , thicknesses[i]) #create box
-                ridge = geompy.MakeTranslation(ridge, -widths[i]/2, 0, z_height + thicknesses[i-1]) #shift all half width back to center origin at symmetry centre
+                ridge = geompy.MakeTranslation(ridge, -widths[i]/2, (box_y - lengths[i])/2, z_height + thicknesses[i-1]) #shift all half width back to center origin at symmetry centre
                 partition_dummy = np.append(partition_dummy ,  ridge)
                 z_height += thicknesses[i-1]
                 geompy.addToStudy(ridge , f'ridge{i}')  
@@ -226,7 +226,7 @@ def new_mesh_ext_sink(data , yhanger = 0): # (ridge mesh , body mesh)
 
         if device.ext_sink_mat != 0: #create external heat sink
             AlN_base = geompy.MakeBoxDXDYDZ(sinkx, sinky, sinkz)
-            AlN_base = geompy.MakeTranslation(AlN_base , -0.5* (sinkx - box_x*n_active), data.device_arb_parameter ,-sinkz) #subtract the hanging distance off
+            AlN_base = geompy.MakeTranslation(AlN_base , -0.5* (sinkx - box_x*n_active), -10 ,-sinkz) #subtract the hanging distance off
             partition_dummy2 = np.append(partition_dummy2 , AlN_base)
             no_in_submesh += 1 #adds another object (if so) to be sub-meshed
             #-0.5*(sinky - box_y)
