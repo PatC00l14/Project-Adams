@@ -120,7 +120,7 @@ def save_data(f_name):
     LinesZ = np.array([])
 
     [dx ,dy ,dz] = device.device_dim *10**-6 
-    dz = 99*10**-6
+    dz = 198*10**-6
 
     dy = 2000*10**-6
 
@@ -135,7 +135,6 @@ def save_data(f_name):
         LinesY[i].Point1 = [x_pos , 0 , dz] ; LinesY[i].Point2 = [x_pos , dy, dz]
         SaveData(f'C:/Projects/Projects/{arg0}/CSV/{V}_{i}_Y.csv', LinesY[i], PointDataArrays=['temperature'])
 
-
         if device.ext_sink_mat == 0:
             LinesZ = np.append(LinesZ , PlotOverLine(registrationName=f'PlotOverLine{i}', Input=solved_object))        
             LinesZ[i].Point1 = [x_pos , 0 , 0] ; LinesZ[i].Point2 = [x_pos , 0, dz]      
@@ -147,7 +146,7 @@ def save_data(f_name):
 
     LinesX = np.append(LinesX , PlotOverLine(registrationName=f'PlotOverLine{i}', Input=solved_object))
     LinesX[0].Point1 = [0 , dy /2  , dz] ; LinesX[0].Point2 = [device.device_dim[0] *10**-6 * device.n_ridges , dy/2, dz]
-    SaveData(f'C:/Projects/Projects/{arg0}/CSV/{V}_{0}_X.csv', LinesX[0], PointDataArrays=['temperature'])
+    #SaveData(f'C:/Projects/Projects/{arg0}/CSV/{V}_{0}_X.csv', LinesX[0], PointDataArrays=['temperature'])
 
     return(0)
 
