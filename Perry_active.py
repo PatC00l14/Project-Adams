@@ -22,7 +22,7 @@ else:
 if True:
     for V in variable:
         #Clear and write bulk of case.sif
-        os.chdir('C:/Projects/bin')
+        os.chdir('C:/Projects/Perry_run')
         os.system(f"python global_write.py {project_name} {sweeping_V} {V}")
 
         #get ready to run salome

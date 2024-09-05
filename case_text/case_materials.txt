@@ -1,0 +1,108 @@
+Material 1
+  Name = "XX Indium Phosphide"
+  Heat Conductivity = 68
+  Heat Capacity = 310
+  Density = 4800
+  Electric Conductivity = 10e6
+  Porosity Model = Always saturated
+End
+
+Material 2
+  Name = "XX Gold"
+  Porosity Model = Always saturated
+  Heat Capacity = 129
+  Heat Conductivity = 318
+  Density = 19300
+  Electric Conductivity = 4.1e7
+End
+
+Material 3
+  Name = "XX Silicon Nitride"
+  Porosity Model = Always saturated
+  Density = 3230
+  Heat Capacity = 880
+  Electric Conductivity = 10e-14
+  Heat Conductivity = 17.5
+End
+
+Material 4
+  Name = "XX Titanium"
+  Heat Capacity = 522.4
+  Heat Conductivity = 11.4
+  Electric Conductivity = 2.38e6
+  Porosity Model = Always saturated
+  Density = 4510
+End
+
+Material 5
+  Name = "XX Platinum"
+  Heat Capacity = 134
+  Heat Conductivity = 69.1
+  Electric Conductivity = 9.43e6
+  Density = 21450
+End
+
+Material 6
+  Name = "XX AlN"
+  Heat Capacity = 740
+  Density = 2920
+  Porosity Model = Always saturated
+  Heat Conductivity = 237
+End
+
+Material 7
+  Name = "XX Ta2O5"
+  Heat Capacity = 300
+  Density = 8200
+  Porosity Model = Always saturated
+  Heat Conductivity = 7
+End
+
+Material 8
+  Name = "XX Silicon"
+  Heat Capacity = 700
+  Density = 2329
+  Porosity Model = Always saturated
+  Heat Conductivity = 10
+End
+
+Material 9
+  Name = "Thermal Paste"
+  Heat Capacity = 700
+  Density = 2500
+  Porosity Model = Always saturated
+  Heat Conductivity = 5
+End
+
+Material 10
+  Name = "AlGaAs"
+  Heat Capacity = 400
+  Density = 5300
+  Porosity Model = Always saturated
+  Heat Conductivity = 24.92560682
+End
+
+Material 11
+  Name = "XX Indium Phosphide Variable"
+  Heat Conductivity = Variable Temperature
+      Real
+        0.0 65
+        65.0 45.5
+        70.0 44.0
+        75.0 42.5
+        80.0 41.0
+        85.0 39.5
+        90.0 38.0
+        95.0 36.5
+        100.0 35.0
+        105.0 33.5
+        110.0 32.0
+      End
+  Heat Capacity = 310
+  Density = 4800
+  Electric Conductivity = 10e6
+  Porosity Model = Always saturated
+End
+
+
+  
