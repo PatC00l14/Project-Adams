@@ -15,20 +15,13 @@ sys.path.insert(0,r'C:/Users/pmillar/Documents/Internship 2024/Week 4/Salome')
 
 import GEOM
 from salome.geom import geomBuilder
-import math
 import SALOMEDS
 import  SMESH, SALOMEDS
 from salome.smesh import smeshBuilder
 
-def write_boundary_conds(boundary1 , T_sink = 25, boundaries2 = 0): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
+def write_boundary_conds(boundary1 , arg0 , T_sink = 25): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
     #here we need the boundary number of the lowest boundary (which was far too much effort to determing from the stupid Salome simulations)
     bound_cond = f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {boundary1}\n  Name = "Heat Sink"\n  Temperature = {T_sink}\nEnd'
-    if boundaries2 != 0:
-        bound_cond2 = f'\n Boundary Condition 2 \n  Target Boundaries(1) = {boundaries2} \n Name = "Convection" \n External Temperature = 25 \n  Heat Transfer Coefficient = 25 \n End \n'
-        bound_cond = bound_cond + boundaries2
-    else:
-        pass
-
     mypath = f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/'
     path = os.path.join(mypath , 'case.sif')
 
@@ -173,7 +166,7 @@ def create_solid_array(Mesh_1 , partition_exploded):
 
     return(solid_array , group_array)
 
-def new_mesh_ext_sink(data): # (ridge mesh , body mesh)
+def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
 
     geompy = geomBuilder.New()
     O = geompy.MakeVertex(0, 0, 0)
@@ -225,17 +218,16 @@ def new_mesh_ext_sink(data): # (ridge mesh , body mesh)
 
     try:
       Mesh_1.ExportUNV( f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/temp_save.unv', 0 )
-      #Mesh_1.ExportUNV( f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/{open_string}.unv', 0 )
       pass
     except:
       print('ExportUNV() failed. Invalid file name?')
 
-    write_boundary_conds(f_o_g,  T_sink = device.T_sink, boundaries2= 0) #can add convection boundaries if interested
+    write_boundary_conds(f_o_g, arg0,  T_sink = device.T_sink) #can add convection boundaries if interested
 
     return(f_o_g)
     
 
-arg0 = sys.argv[1] #project name - can also take in more arguments if necessary
+arg1 = sys.argv[1] #project name - can also take in more arguments if necessary
 
 V = float(sys.argv[2]) #input variable
 sweeping_V = int(sys.argv[3])
@@ -273,4 +265,4 @@ elif sweeping_V ==0:
 elif sweeping_V == 9:
     device.device_arb_parameter = V
 
-new_mesh_ext_sink(device)
+new_mesh_ext_sink(device, arg1)
