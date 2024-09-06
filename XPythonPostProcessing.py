@@ -34,25 +34,22 @@ for fname in os.listdir(directory):
     if fname[-3:] == 'csv':
         if fname[-5] =='Y':
             T, Y = pandas_import_func(directory + f'/{fname}' , 'Y')
-            if  True:    #don't plot if data diverges
-                axs[0].plot(Y*10**6,T , label = fname)
-                if sweeping_v !=0:
-                    try:
-                        axs[2].errorbar(float(fname[:-8]),np.max(T) ,yerr = 2 * np.std(T))
-                        axs[2].plot(float(fname[:-8]),np.max(T) , 'ro', markersize=3)
-                    except:
-                        pass
-                elif sweeping_v ==0:
-                    axs[2].errorbar(fname[-7] , np.max(T), yerr = 2 * np.std(T) )
-                    axs[2].plot(float(fname[-7]),np.max(T) , 'ro', markersize=3)
-            else:
-                pass
+
+            axs[0].plot(Y*10**6,T , label = fname)
+            if sweeping_v !=0:
+                try:
+                    axs[2].errorbar(float(fname[:-8]),np.max(T) ,yerr = 2 * np.std(T))
+                    axs[2].plot(float(fname[:-8]),np.max(T) , 'ro', markersize=3)
+                except:
+                    pass
+            elif sweeping_v ==0:
+                axs[2].errorbar(fname[-7] , np.max(T), yerr = 2 * np.std(T) )
+                axs[2].plot(float(fname[-7]),np.max(T) , 'ro', markersize=3)
         elif fname[-5] == 'Z':
             T, Y = pandas_import_func(directory + f'/{fname}' , 'Z')
-            if True: #don't plot if data diverges
-                axs[1].plot(Y*10**6,T , label = fname)
-            else:
-                pass
+            axs[1].plot(Y*10**6,T , label = fname)
+            
+
     else:
         pass
 

@@ -77,7 +77,6 @@ def create_device ( data, geompy, back_facet_trench = False):
         base = geompy.MakeCut(base , ridge_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
 
-    
     for i in range ( 1 , n_active): #create trenches halfway between each active region
         x_pos = base_x * i
         trench_cut = geompy.MakeTranslation(trench , x_pos , 0 , base_z - trench_z)
@@ -94,6 +93,17 @@ def create_device ( data, geompy, back_facet_trench = False):
     ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
     ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-10 , -ext_sink_z)
     partition_array = np.append(partition_array , ext_sink)
+    #need to add a therml paste layer if there is a chuck/ cartride. Set thickness of 50um sitting directly underneath the submount
+    if data.cartridge_mat !=0:
+        therm_paste = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,50)
+        therm_paste = geompy.MakeTranslation(therm_paste, (n_active * base_x - ext_sink_x) / 2 ,-10 , -ext_sink_z-50)
+        partition_array = np.append(partition_array, therm_paste)
+    #add a thermistor on top of the submount
+    if data.thermistor_mat !=0:
+        tx, ty,tz = data.thermistor_dim
+        thermistor = geompy.MakeBoxDXDYDZ(tx , ty, tz)
+        thermistor = geompy.MakeTranslation(thermistor, base_x*(n_active + 1.5), 100 , 0)
+        partition_array = np.append(partition_array ,thermistor)
 
     final_partition = geompy.MakePartition(partition_array.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
 
@@ -134,7 +144,7 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
     Gmsh_Parameters.SetMaxSize( 1e+22 ) #maximum mesh size 
     Gmsh_Parameters.SetSizeFactor( fine_mesh) #RIDGE MESH
     Gmsh_Parameters.SetIs2d( 0 )
-    #Auto_group_for_Sub_mesh_1_2 = Mesh_1.GroupOnGeom(Auto_group_for_Sub_mesh_1,'Auto_group_for_Sub-mesh_1',SMESH.VOLUME)
+    #Sub mesh group is meshed first. Set at a lower mesh quality to avoid over meshing in larger geometries
     GMSH_1_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH , geom = sub_mesh_group)
     Gmsh_Parameters_1 = GMSH_1_1.Parameters()
     Gmsh_Parameters_1.Set2DAlgo( 0 )
@@ -179,9 +189,10 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
 
     if data.cartridge_mat!=0:
         adams_partition = []
-        for i in range(0,data.n_chips):
-            x_pos = (63 + i*173/2)*1000
-            z_pos = (20+12)*1000 + data.ext_sink_dim[2]
+        temp_array =np.array([1,10,20])
+        for i in temp_array:
+            x_pos = (61 + 8.9*(i-1/2))*1000
+            z_pos = (20+12)*1000 + data.ext_sink_dim[2] + 50
             chip1 = geompy.MakeTranslation(chip, x_pos , 2.1*1000, z_pos )
             adams_partition = np.append(adams_partition , chip1)
         cartridge = create_cartridge(data, geompy)
@@ -195,10 +206,14 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
 
     partition_exploded = geompy.ExtractShapes(adams_partition, geompy.ShapeType["SOLID"], False) #exploded the object into a large array
     sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
+
     if data.cartridge_mat!=0:
         geompy.UnionList(sub_mesh_auto_group, partition_exploded[-4:]) #reverse order goes: Sink, base , ridges - chronological order
     else:
-        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:]) #reverse order goes: Sink, base , ridges - chronological order
+        if data.thermistor_mat!=0: #thermistor present
+            geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:]) #reverse order goes: thermisotr, Sink, base , ridges - chronological order
+        else:
+            geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:]) #reverse order goes: Sink, base , ridges - chronological order
 
     geompy.addToStudy( O, 'O' )
     geompy.addToStudy( OX, 'OX' )

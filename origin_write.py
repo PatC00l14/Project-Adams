@@ -28,9 +28,11 @@ class MySemiconductor:
         self.ffront_y = float(input_dat[1,16])
         self.ffront_mat = int(input_dat[1,17])
         self.fback_y = float(input_dat[1,18])
-        self.fback_mat = int(input_dat[1,19])
-        self.nitride_cover = int(input_dat[1,20])
+        self.thermistor_dim = input_dat[1:4,19].astype(float)
+        self.thermistor_mat = int(input_dat[1,20])
+
         self.device_arb_parameter = float(0) #this is an arbitrary parameter, used as a placeholder to sweep something directly from the code
+
         self.trench_dim = input_dat[1:4 , 21].astype(float)
         self.cartridge_mat = int(input_dat[1,22])
         self.cartridge_dim = input_dat[1:4,23].astype(float)
@@ -57,28 +59,40 @@ def write_ind_body(ind , material , body_force): # write an individual body forc
 
 def write_bodies( device,file): 
     body_string = '\n'
+
+    n_r = device.n_ridges #number of ridges per chip
+    n_l = device.n_layers #number of layers per ridge
+    if device.thermistor_mat !=0:
+        t_count = 1
+    else:
+        t_count = 0
+
     if device.cartridge_mat!=0: #mulitple chips - therefore cartridge and chuck
         n_c = device.n_chips #number of chips
-        n_r = device.n_ridges #number of ridges per chip
-        n_l = device.n_layers #number of layers per ridge
         count = 1 #counter for indexing the body force (heating power)
+        
         for c in range(0, n_c): #chip index
             for r in range(0, n_r): #ridge index
                 count = 1
                 for l in range(1,n_l+1): #layer index
-                    num = c*(2+n_r*n_l) + r*(n_l) + l
+                    num = c*(3 + t_count + n_r*n_l) + r*(n_l) + l
                     if device.r_heat_power[l-1] *device.r_onoff[r] !=0: #this means there IS heating in this layer
-                        body_string = body_string + write_ind_body(num, device.r_materials[l-1] ,count) + f'\n'
+                        body_string = body_string + write_ind_body(num, device.r_materials[l-1] ,count) + '\n'
                         count += 1
                     else:
-                        body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + f'\n'
-            num = (c+1)*(n_r*n_l+2) - 1
-            body_string = body_string + write_ind_body(num , device.device_mat , 0) + f'\n' #chip base
-            body_string = body_string + write_ind_body(num+1 + 0, device.ext_sink_mat , 0) + '\n'#chip submount
-        body_string = body_string + write_ind_body(num+2 , device.cartridge_mat , 0 ) + '\n' #cartridge
-        body_string = body_string + write_ind_body(num+3 , device.cartridge_mat , 0 ) + '\n' #chuck sidewall
-        body_string = body_string + write_ind_body(num+4 , device.cartridge_mat , 0 ) + '\n' #chuck sidewall
-        body_string = body_string + write_ind_body(num+5 , device.cartridge_mat , 0 ) + '\n' #chuck base
+                        body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + '\n'
+            num = (c+1)*(n_r*n_l + 3 + t_count) - 3 
+            body_string = body_string + write_ind_body(num, device.device_mat , 0) + '\n' #chip base
+            body_string = body_string + write_ind_body(num+1, device.ext_sink_mat , 0) + '\n'#chip submount
+            body_string = body_string + write_ind_body(num+2, 9 , 0) + '\n'#submount thermal paste
+            if t_count ==1:
+                body_string = body_string + write_ind_body(num + 2 + t_count, device.thermistor_mat , 0) + '\n'#thermistor on submount
+
+        body_string = body_string + write_ind_body(num+3 + t_count , device.cartridge_mat , 0 ) + '\n' #cartridge
+        body_string = body_string + write_ind_body(num+4 + t_count , device.cartridge_mat , 0 ) + '\n' #chuck sidewall
+        body_string = body_string + write_ind_body(num+5 + t_count , device.cartridge_mat , 0 ) + '\n' #chuck sidewall
+        body_string = body_string + write_ind_body(num+6 + t_count , device.cartridge_mat , 0 ) + '\n' #chuck base
+
     else: #single chip - therefore no cartridge and chuck
         for r in range(0, n_r): #ridge index
             count = 1
@@ -92,6 +106,8 @@ def write_bodies( device,file):
         num = (n_r*n_l) + 1
         body_string = body_string + write_ind_body(num , device.device_mat , 0) + f'\n' #chip base
         body_string = body_string + write_ind_body(num+1 + 0, device.ext_sink_mat , 0) + '\n'#chip submount
+        if t_count ==1:
+                body_string = body_string + write_ind_body(num + 1 + t_count, device.thermistor_mat , 0) + '\n'#thermistor on submount
     file.write(f'{body_string}')
     return()
 

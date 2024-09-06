@@ -43,7 +43,7 @@ elif sweeping_V ==0:
 
 def save_line_data( X1 , X2, V , i , Y_Z, solved_object, c = -1 ):
     [x1,y1,z1] = X1*10**-6 ; [x2, y2, z2] = X2*10**-6 
-    #X1,X2:begining / end coordinates. These should be in um
+    #X1,X2:begining / end coordinates. These should be in ""um""
     #V: sweeping variable value. V = 0.0 if no sweep
     #i: laser index number
     #Y_Z: Y axis or Z axis specific
@@ -105,17 +105,20 @@ def save_data(f_name):
     subm_z = device.ext_sink_dim[2] #z scale of submount / heat sink
     n_c = device.n_chips #number of chip
     n_r = device.n_ridges #number of ridges per chip
-
+    temp_array =np.array([1,10,20])
     if device.cartridge_mat !=0: #chuch and cartridge present
-        for c in range(n_c):
+        for c in temp_array:
             for r in range(n_r):
-                x_pos = (63 + c*173/2)*1000 + dx*(r + 0.5)
-                x_1 = np.array([x_pos, 2*1000     , (20 + 5)*1000 + subm_z])
-                x_2 = np.array([x_pos, 2*1000 + dy, (20 + 5)*1000 + subm_z])
+                x_pos = (61 + 8.9*(c-1/2))*1000 + dx*(r + 0.5)
+                x_1 = np.array([x_pos, 2*1000     , (20 + 12)*1000 + 50 + subm_z + dz])
+                x_2 = np.array([x_pos, 2*1000 + dy, (20 + 12)*1000 + 50 + subm_z + dz])
                 save_line_data(x_1, x_2, V, r, 'Y',solved_object, c=c)
+                x_1 = np.array([x_pos, 2*1000     , (20 + 12)*1000 + 50 + subm_z])
+                x_2 = np.array([x_pos, 2*1000 + dy, (20 + 12)*1000 + 50 + subm_z])
+                save_line_data(x_1, x_2, V+0.69, r, 'Y',solved_object, c=c)
 
-                x_1 = np.array([x_pos, 2*1000, (20 + 5)*1000 + subm_z])
-                x_2 = np.array([x_pos, 2*1000, (20 + 5)*1000 + subm_z + dz])
+                x_1 = np.array([x_pos, 2*1000, (20 + 12)*1000 + subm_z+ 50])
+                x_2 = np.array([x_pos, 2*1000, (20 + 12)*1000 + subm_z + 50 + dz])
                 save_line_data(x_1, x_2, V, r, 'Z',solved_object, c=c)
     else: #Just submount and a single chip
         for r in range(n_r):
@@ -126,6 +129,13 @@ def save_data(f_name):
             x_1 = np.array([x_pos, 0, 0])
             x_2 = np.array([x_pos, 0, dz])
             save_line_data(x_1, x_2, V, r, 'Z',solved_object)
+            if device.thermistor_mat != 0:
+                tx, ty, tz = device.thermistor_dim
+                x_pos += 2 * dx + tx/2
+                x_1 = np.array([x_pos, ty/2, 0 ])
+                x_2 = np.array([x_pos, ty/2, tz])
+                save_line_data(x_1, x_2, V+0.69, r, 'Z',solved_object)
+
 
     return(0)
 
