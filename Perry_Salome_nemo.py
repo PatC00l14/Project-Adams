@@ -7,7 +7,7 @@ import os.path
 sys.path.append('C:/Projects/Perry_run')
 from origin_write import MySemiconductor
 
-#from Perry_active import device_hold
+
 salome.salome_init()
 import salome_notebook
 notebook = salome_notebook.NoteBook()
@@ -129,6 +129,7 @@ def create_chuck(sc_data , geompy): #create the chuck with walls to hold the car
     chuck_array = np.append(chuck_array , chuck_wall1)
     chuck_array = np.append(chuck_array , chuck_wall2)
     chuck = geompy.MakePartition(chuck_array.tolist(), [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
+
     return(chuck)
     
 
@@ -158,12 +159,18 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
 
 def find_face_of_god(smesh , group_array):
 
+    fog = open(f'C:/Projects/bin_extinct/why_would_this_happen.txt' , 'w')
+    fog.close()
+    fog = open(f'C:/Projects/bin_extinct/why_would_this_happen.txt' , 'a')
+    temp_z = 1
     for i  in range(0 , len(group_array)):
             BBox = smesh.GetBoundingBox(group_array[i])
-            temp_z = 1
+            
             if BBox.minZ == BBox.maxZ and BBox.minZ < temp_z:
                 temp_z = BBox.minZ
                 f_o_g = i + 1
+                fog.write(f'face{f_o_g} - minZ={temp_z} \n')
+    fog.close()
     return(int(f_o_g))
 
 def create_solid_array(Mesh_1 , partition_exploded):

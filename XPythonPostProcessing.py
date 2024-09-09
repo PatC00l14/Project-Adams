@@ -3,31 +3,29 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 import sys
-
 sys.path.append('C:/Projects/Perry_run')
 from origin_write import MySemiconductor
+
 pandas_data = pd.read_csv('C:/Projects/Perry_run/input_csv.csv').to_numpy()
 device = MySemiconductor(pandas_data) #put data into MySemiconductor class
 
-arg0 = os.getcwd()
-sweeping_v = int(sys.argv[1]) #name of sweeping parameter
+project_name = sys.argv[1]
+sweeping_v = int(sys.argv[2]) #name of sweeping parameter
 
 
 def pandas_import_func(filename, Z_Y):
     data = pd.read_csv(filename)
     data = data.to_numpy()
-
     if Z_Y == 'Y':
         d1 = data[:,0] ; d2 = data[:,5]
     elif Z_Y == 'Z':
         d1 = data[:,0] ; d2 = data[:,6]
-
     nan = ~pd.isna(d1)
     d1 = d1[nan] ; d2 = d2[nan]
     return( d1, d2)
 
 
-directory = f'{arg0}/CSV'
+directory = f'C:/Projects/Projects/{project_name}/CSV'
 fig, axs = plt.subplots(1,3, figsize = (12 , 4))
 
 for fname in os.listdir(directory):
@@ -48,13 +46,10 @@ for fname in os.listdir(directory):
         elif fname[-5] == 'Z':
             T, Y = pandas_import_func(directory + f'/{fname}' , 'Z')
             axs[1].plot(Y*10**6,T , label = fname)
-            
 
     else:
         pass
 
-
-    
 if sweeping_v ==0:
     sweep_title = 'Individual ridges'
 elif sweeping_v == 1:

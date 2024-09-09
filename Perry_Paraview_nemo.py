@@ -115,7 +115,7 @@ def save_data(f_name):
                 save_line_data(x_1, x_2, V, r, 'Y',solved_object, c=c)
                 x_1 = np.array([x_pos, 2*1000     , (20 + 12)*1000 + 50 + subm_z])
                 x_2 = np.array([x_pos, 2*1000 + dy, (20 + 12)*1000 + 50 + subm_z])
-                save_line_data(x_1, x_2, V+0.69, r, 'Y',solved_object, c=c)
+                save_line_data(x_1, x_2, V+0.14, r, 'Y',solved_object, c=c)
 
                 x_1 = np.array([x_pos, 2*1000, (20 + 12)*1000 + subm_z+ 50])
                 x_2 = np.array([x_pos, 2*1000, (20 + 12)*1000 + subm_z + 50 + dz])
@@ -134,8 +134,7 @@ def save_data(f_name):
                 x_pos += 2 * dx + tx/2
                 x_1 = np.array([x_pos, ty/2, 0 ])
                 x_2 = np.array([x_pos, ty/2, tz])
-                save_line_data(x_1, x_2, V+0.69, r, 'Z',solved_object)
-
+                save_line_data(x_1, x_2, V+0.14, r, 'Z',solved_object)
 
     return(0)
 

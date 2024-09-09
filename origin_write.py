@@ -81,7 +81,7 @@ def write_bodies( device,file):
                         count += 1
                     else:
                         body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + '\n'
-            num = (c+1)*(n_r*n_l + 3 + t_count) - 3 
+            num = (c+1)*(n_r*n_l + 3 + t_count) - 2 - t_count
             body_string = body_string + write_ind_body(num, device.device_mat , 0) + '\n' #chip base
             body_string = body_string + write_ind_body(num+1, device.ext_sink_mat , 0) + '\n'#chip submount
             body_string = body_string + write_ind_body(num+2, 9 , 0) + '\n'#submount thermal paste
