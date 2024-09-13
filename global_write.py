@@ -9,12 +9,11 @@ sweeping_V = int(sys.argv[2]) #sweeping argument index
 V = float(sys.argv[3]) 
 
 if sweeping_V == 8: #sweeping the device power
-    device0.r_heat_power[-1]  = V * 0.001 * (1/8) #temporary method to sweep power input
+    for i in range(device0.n_layers):
+        device0.r_heat_power[i]  = V * 0.001 / 3 #temporary method to sweep power input
     global_write(arg0 , device0)
 elif sweeping_V ==9:
-    V = int(V)
-    #device0.r_onoff = np.zeros(device0.n_ridges)
-    device0.r_onoff[V] == 1
+    device0.thermal_resistance = V
     global_write(arg0 , device0)
 else:
     global_write(arg0 , device0)

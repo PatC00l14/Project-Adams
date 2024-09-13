@@ -19,13 +19,29 @@ import SALOMEDS
 import  SMESH, SALOMEDS
 from salome.smesh import smeshBuilder
 
-def write_boundary_conds(boundary1 , arg0 , T_sink = 25): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
+def write_boundary_conds(boundary1 , arg0 ,dat, boundary2 = 0): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
     #here we need the boundary number of the lowest boundary (which was far too much effort to determing from the stupid Salome simulations)
-    bound_cond = f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {boundary1}\n  Name = "Heat Sink"\n  Temperature = {T_sink}\nEnd'
     mypath = f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/'
     path = os.path.join(mypath , 'case.sif')
+    
+    bound_cond1 = f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {boundary1}\n  Name = "Heat Sink"\n  Temperature = {dat.T_sink}\nEnd'
+    
+    
+    if boundary2 !=0:
+        #heat_transfer_coeff = 10**12 / (dat.thermal_resistance *  dat.device_dim[0] * dat.device_dim[1] * dat.n_ridges)
+        heat_transfer_coeff = dat.thermal_resistance*10**23
+        bound_cond2 = f'\n\nBoundary Condition 2\n  Target Boundaries(1) = {boundary2}\n  Name = "Thermal resistance"\n  Heat Transfer Coefficient = {heat_transfer_coeff}\n  Heat Gap = True\nEnd'
+        bound_cond1 += bound_cond2
 
-    file = open(path , 'a') ; file.write(bound_cond) ; file.close()
+    
+    try:
+        file = open(path , 'a') 
+        file.write(bound_cond1)
+        file.close()
+    except:
+        print("fucking error")
+ 
+    
     return()
 
 
@@ -157,21 +173,28 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
     isDone = Mesh_1.Compute()
     return(Mesh_1)
 
-def find_face_of_god(smesh , group_array):
+def find_face_of_god(smesh , group_array, data):
 
     fog = open(f'C:/Projects/bin_extinct/why_would_this_happen.txt' , 'w')
     fog.close()
     fog = open(f'C:/Projects/bin_extinct/why_would_this_happen.txt' , 'a')
     temp_z = 1
+    f_o_g2 = 0
     for i  in range(0 , len(group_array)):
             BBox = smesh.GetBoundingBox(group_array[i])
             
-            if BBox.minZ == BBox.maxZ and BBox.minZ < temp_z:
-                temp_z = BBox.minZ
-                f_o_g = i + 1
-                fog.write(f'face{f_o_g} - minZ={temp_z} \n')
+            if BBox.minZ == BBox.maxZ: 
+                if BBox.minZ < temp_z:
+                    temp_z = BBox.minZ
+                    f_o_g = i + 1
+                    fog.write(f'face{f_o_g} - minZ={temp_z} \n')
+                if data.cartridge_mat ==0 and BBox.minZ == 0 and data.thermal_resistance !=0:
+                    f_o_g2 = i+1
+
+                    
+    fog.write(f'{f_o_g2}')
     fog.close()
-    return(int(f_o_g))
+    return(int(f_o_g), int(f_o_g2))
 
 def create_solid_array(Mesh_1 , partition_exploded):
 
@@ -236,15 +259,15 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     Mesh_1 = create_mesh(data , adams_partition , sub_mesh_auto_group, smesh)
     solid_array , group_array = create_solid_array(Mesh_1 , partition_exploded)
 
-    f_o_g = find_face_of_god(smesh , group_array)   
+    f_o_g, f_o_g2 = find_face_of_god(smesh , group_array, data) 
 
     try:
       Mesh_1.ExportUNV( f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/temp_save.unv', 0 )
       pass
     except:
       print('ExportUNV() failed. Invalid file name?')
-
-    write_boundary_conds(f_o_g, arg0,  T_sink = device.T_sink) #can add convection boundaries if interested
+    
+    write_boundary_conds(f_o_g, arg0, data, boundary2=f_o_g2) #can add convection boundaries if interested
 
     return(f_o_g)
     
@@ -253,7 +276,6 @@ arg1 = sys.argv[1] #project name - can also take in more arguments if necessary
 
 V = float(sys.argv[2]) #input variable
 sweeping_V = int(sys.argv[3])
-
 
 
 pandas_data = pd.read_csv('C:/Projects/Perry_run/input_csv.csv').to_numpy()
@@ -268,6 +290,8 @@ elif sweeping_V ==2:
     pass_string = 'box_x'
 elif sweeping_V == 3:
     device.device_dim[1] = V
+    for i in range(0 , device.n_layers):
+        device.r_lengths[i] = V
     pass_string = 'box_y'
 elif sweeping_V == 4:
     device.device_dim[2] = V
@@ -285,6 +309,6 @@ elif sweeping_V == 7:
 elif sweeping_V ==0:
     pass
 elif sweeping_V == 9:
-    device.device_arb_parameter = V
+    device.thermal_resistance = V
 
 new_mesh_ext_sink(device, arg1)

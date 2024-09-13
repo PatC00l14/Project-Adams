@@ -9,34 +9,34 @@ from origin_write import MySemiconductor #import semiconductor class
 #### disable automatic camera reset on 'Show'
 paraview.simple._DisableFirstRenderCameraReset()
 
-device = pd.read_csv('C:/Projects/Perry_run/input_csv.csv').to_numpy()
-device = MySemiconductor(device)
+device1 = pd.read_csv('C:/Projects/Perry_run/input_csv.csv').to_numpy()
+device1 = MySemiconductor(device1)
 
 arg0  = sys.argv[1]  #get paraview executable as file/project name
 V = float(sys.argv[2])
 sweeping_V = int(sys.argv[3])#getting sweeping parameter which is being varied to adjust measurement locations
 
 if sweeping_V == 1:
-    device.n_ridges = V
+    device1.n_ridges = V
     pass_string = 'n_ridges'
 elif sweeping_V ==2:
-    device.device_dim[0] = V
+    device1.device_dim[0] = V
     pass_string = 'box_x'
 elif sweeping_V == 3:
-    device.device_dim[1] = V
+    device1.device_dim[1] = V
     pass_string = 'box_y'
 elif sweeping_V == 4:
-    device.device_dim[2] = V
+    device1.device_dim[2] = V
     pass_string = 'box_z'
 elif sweeping_V == 5:
-    device.T_sink = V
+    device1.T_sink = V
     pass_string = 'T_sink'
 elif sweeping_V == 6:
     pass_string = 'mesh_factor'
-    device.bdy_mesh = device.bdy_mesh *V
-    device.r_mesh = device.r_mesh *V
+    device1.bdy_mesh = device1.bdy_mesh *V
+    device1.r_mesh = device1.r_mesh *V
 elif sweeping_V == 7:
-    device. z_ridge = V
+    device1. z_ridge = V
     pass_string = 'z_ridge'
 elif sweeping_V ==0:
     pass
@@ -57,7 +57,7 @@ def save_line_data( X1 , X2, V , i , Y_Z, solved_object, c = -1 ):
         SaveData(f'C:/Projects/Projects/{arg0}/CSV/{V}_0_{i}_{Y_Z}.csv', line_data, PointDataArrays=['temperature'])
     return()
 
-def save_data(f_name):
+def save_data(f_name,device):
     solved_object = XMLUnstructuredGridReader(registrationName= f'{f_name[-8:]}' , FileName = [f'{f_name}'])
     # set active source
     SetActiveSource(solved_object)
@@ -142,4 +142,4 @@ directory = f'C:/ElmerFEM/ElmerFEM/bin/{arg0}'
 L_dir = len(directory)
 
 f = os.path.join(directory, "case_t0001.vtu")
-save_data(f)
+save_data(f, device1)

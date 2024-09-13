@@ -25,14 +25,13 @@ class MySemiconductor:
         self.ext_sink_dim = input_dat[1:4, 14].astype(float)
         self.ext_sink_mat = int(input_dat[1,15])
         #front and back facet details
-        self.ffront_y = float(input_dat[1,16])
+        self.thermal_resistance = float(input_dat[1,16])
         self.ffront_mat = int(input_dat[1,17])
         self.fback_y = float(input_dat[1,18])
         self.thermistor_dim = input_dat[1:4,19].astype(float)
         self.thermistor_mat = int(input_dat[1,20])
 
         self.device_arb_parameter = float(0) #this is an arbitrary parameter, used as a placeholder to sweep something directly from the code
-
         self.trench_dim = input_dat[1:4 , 21].astype(float)
         self.cartridge_mat = int(input_dat[1,22])
         self.cartridge_dim = input_dat[1:4,23].astype(float)
@@ -179,7 +178,7 @@ def global_write(project_name , device):
     write_equation(my_file)
     write_materials(my_file)
     write_body_forces(device,my_file) #needs heat power for each ridge
-    write_initial_conds(my_file , T_init = 65)#can take in the a different initial temp if that is of interest
+    write_initial_conds(my_file , T_init = 100)#can take in the a different initial temp if that is of interest
     #write_boundary_conds -DO NOT EXECUTE HERE, needs Salome input so execute direclty from Salome script
     write_ESSI(project_name)
     my_file.close()

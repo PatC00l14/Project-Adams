@@ -73,10 +73,13 @@ else:
 
 axs[0].set_title(f'Y sim') ; axs[1].set_title(f'Z sim') ; axs[2].set_title(f'{sweep_title}')
 axs[0].set_xlabel('Y - axis (um)') ; axs[0].set_ylabel('Temperature (C)') ; axs[1].set_xlabel('Z - axis (um)') ; axs[1].set_ylabel('Temperature (C)')
-axs[0].set_ylim(device.T_sink, ) ; axs[1].set_ylim(device.T_sink, ) ;  axs[2].set_ylim(device.T_sink, )
+axs[0].set_ylim(device.T_sink-5, ) ; axs[1].set_ylim(device.T_sink-5, ) ;  axs[2].set_ylim(device.T_sink-5, )
 axs[2].set_ylabel('Temperature (C)') ; axs[2].set_xlabel(f'{sweep_title}')
 axs[1].set_xlim(0,)
+for i in range(0,3):
+    axs[i].grid()
+    axs[i].set_ylabel('Temperature(C)')
 
-fig.savefig('plot.png')
+fig.savefig(f'C:/Projects/Projects/{project_name}/plot.png')
 
 
