@@ -51,11 +51,24 @@ Material 6
 End
 
 Material 7
-  Name = "XX Ta2O5"
-  Heat Capacity = 300
-  Density = 8200
+  Name = "XX AlN non linear"
+  Heat Capacity = 740
+  Density = 2920
   Porosity Model = Always saturated
-  Heat Conductivity = 7
+  Heat Conductivity = Variable Temperature
+      Real
+        27.0 293.0
+        37.0 280.7
+        47.0 268.4
+        57.0 256.1
+        67.0 243.8
+        77.0 231.5
+        87.0 219.2
+        97.0 206.8
+        107.0 194.6
+        117.0 182.3
+        127.0 170.0
+      End
 End
 
 Material 8

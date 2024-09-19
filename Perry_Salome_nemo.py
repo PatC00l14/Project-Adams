@@ -83,6 +83,10 @@ def create_device ( data, geompy, back_facet_trench = False):
 
     trench = geompy.MakeBoxDXDYDZ(trench_x , trench_y , trench_z )
     trench = geompy.MakeTranslation(trench , -trench_x , 0 , 0 )
+    
+
+    ridge_trench = geompy.MakeBoxDXDYDZ(22 , base_y, np.sum(data.r_heights) )
+    ridge_trench = geompy.MakeTranslation(ridge_trench , -11 , 0 , 0)
 
     base = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , base_y , base_z)
     base = geompy.MakeTranslation(base , -base_x / 2 , 0 , 0 )
@@ -90,7 +94,9 @@ def create_device ( data, geompy, back_facet_trench = False):
     for i in range( 0 , n_active): #insert all the active regions into the chip
         x_pos = base_x * ( i + 0.5)
         ridge_cut = geompy.MakeTranslation(ridge , x_pos , 0 , z_pos)
+        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos)
         base = geompy.MakeCut(base , ridge_cut , True)
+        base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
 
     for i in range ( 1 , n_active): #create trenches halfway between each active region
