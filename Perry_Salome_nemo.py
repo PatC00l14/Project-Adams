@@ -45,7 +45,7 @@ def write_boundary_conds(boundary1 , arg0 ,dat, boundary2 = 0): #heat sink tempe
     return()
 
 
-def create_ridges(sc_data , geompy): #this function creates the combined ridge structure
+def create_ridges(sc_data , geompy, middle_y = True): #this function creates the combined ridge structure
     
     base_y = sc_data.device_dim[1]
     widths = sc_data.r_widths
@@ -59,7 +59,11 @@ def create_ridges(sc_data , geompy): #this function creates the combined ridge s
     
     for i in range(0 , n_ridges):
         ridge = geompy.MakeBoxDXDYDZ(widths[i] , lengths[i] , thicknesses[i])
-        ridge = geompy.MakeTranslation(ridge , -widths[i]/2 , (base_y - lengths[i])/2 , np.sum(thicknesses[:i]))
+
+        if middle_y:
+            ridge = geompy.MakeTranslation(ridge , -widths[i]/2 , (base_y - lengths[i])/2 , np.sum(thicknesses[:i]))
+        else:
+            ridge = geompy.MakeTranslation(ridge , -widths[i]/2 , 0 , np.sum(thicknesses[:i]))
         geompy.addToStudy(ridge , f'ridge{i}')
         ridge_partition = np.append(ridge_partition , ridge)
 
@@ -68,10 +72,10 @@ def create_ridges(sc_data , geompy): #this function creates the combined ridge s
     return(combined_ridge)
 
 
-def create_device ( data, geompy, back_facet_trench = False):
+def create_device ( data, geompy, back_facet_trench = False, middle_y = True):
     #this will create the a single chip with a submount. The ridge is created within this function
 
-    ridge = create_ridges(data , geompy)
+    ridge = create_ridges(data , geompy, middle_y = middle_y)
 
     partition_array = []
 
@@ -85,7 +89,7 @@ def create_device ( data, geompy, back_facet_trench = False):
     trench = geompy.MakeTranslation(trench , -trench_x , 0 , 0 )
     
 
-    ridge_trench = geompy.MakeBoxDXDYDZ(22 , base_y, np.sum(data.r_heights) )
+    ridge_trench = geompy.MakeBoxDXDYDZ(22 , base_y -250, np.sum(data.r_heights) )
     ridge_trench = geompy.MakeTranslation(ridge_trench , -11 , 0 , 0)
 
     base = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , base_y , base_z)
@@ -104,17 +108,18 @@ def create_device ( data, geompy, back_facet_trench = False):
         trench_cut = geompy.MakeTranslation(trench , x_pos , 0 , base_z - trench_z)
         base = geompy.MakeCut(base , trench_cut , True)
 
-    if back_facet_trench: #ability to create a back facet trench if there is a back facet monitor present
-        back_trench = geompy.MakeBoxDXDYDZ(base_x , trench_x , trench_z)
-        back_facet_trench = geompy.MakeTranslation(back_trench, 0 , base_y-330 , base_z - trench_z )
+    if back_facet_trench: #create a back facet trench if there is a back facet monitor present
+        back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , trench_x , trench_z)
+        back_facet_trench = geompy.MakeTranslation(back_trench, -base_x , base_y-250 , base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
 
     partition_array = np.append(partition_array  ,base) 
 
     #add submount or external_heatsink
-    ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
-    ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-10 , -ext_sink_z)
-    partition_array = np.append(partition_array , ext_sink)
+    if device.ext_sink_mat !=0:
+       ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
+       ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-10 , -ext_sink_z)
+       partition_array = np.append(partition_array , ext_sink)
     #need to add a therml paste layer if there is a chuck/ cartride. Set thickness of 50um sitting directly underneath the submount
     if data.cartridge_mat !=0:
         therm_paste = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,50)
@@ -221,7 +226,7 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     OZ = geompy.MakeVectorDXDYDZ(0, 0, 1)
 
     #multi_ridge = create_ridges (data , geompy)
-    chip, multi_ridge = create_device( data ,  geompy , back_facet_trench=False)
+    chip, multi_ridge = create_device( data ,  geompy , back_facet_trench=True, middle_y=False)
 
     if data.cartridge_mat!=0:
         adams_partition = []

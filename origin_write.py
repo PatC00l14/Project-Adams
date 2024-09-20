@@ -104,7 +104,10 @@ def write_bodies( device,file):
                     body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + f'\n'
         num = (n_r*n_l) + 1
         body_string = body_string + write_ind_body(num , device.device_mat , 0) + f'\n' #chip base
-        body_string = body_string + write_ind_body(num+1 + 0, device.ext_sink_mat , 0) + '\n'#chip submount
+        num +=1
+        if device.ext_sink_mat !=0:
+            body_string = body_string + write_ind_body(num, device.ext_sink_mat , 0) + '\n'#chip submount
+            num +=1
         if t_count ==1:
                 body_string = body_string + write_ind_body(num + 1 + t_count, device.thermistor_mat , 0) + '\n'#thermistor on submount
     file.write(f'{body_string}')
