@@ -72,7 +72,7 @@ def create_ridges(sc_data , geompy, middle_y = True): #this function creates the
     return(combined_ridge)
 
 
-def create_device ( data, geompy, back_facet_trench = False, middle_y = True):
+def create_device ( data, geompy, back_facet_trench = False, middle_y = True, extra_width = True):
     #this will create the a single chip with a submount. The ridge is created within this function
 
     ridge = create_ridges(data , geompy, middle_y = middle_y)
@@ -83,34 +83,40 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True):
     [trench_x, trench_y , trench_z] = data.trench_dim
     [ext_sink_x,ext_sink_y,ext_sink_z] = data.ext_sink_dim
     n_active = data.n_ridges
-    z_pos = base_z  + data.z_ridge
+    z_pos = base_z  - np.sum(data.r_heights)
 
     trench = geompy.MakeBoxDXDYDZ(trench_x , trench_y , trench_z )
-    trench = geompy.MakeTranslation(trench , -trench_x , 0 , 0 )
+    trench = geompy.MakeTranslation(trench , -trench_x/2 , 0 , 0 )
     
 
-    ridge_trench = geompy.MakeBoxDXDYDZ(22 , base_y -250, np.sum(data.r_heights) )
+    ridge_trench = geompy.MakeBoxDXDYDZ(22 , base_y - 285, 1.5 )
     ridge_trench = geompy.MakeTranslation(ridge_trench , -11 , 0 , 0)
-
-    base = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , base_y , base_z)
-    base = geompy.MakeTranslation(base , -base_x / 2 , 0 , 0 )
+    
+    if extra_width:
+        base = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , base_y , base_z)
+        base = geompy.MakeTranslation(base , -base_x / 2 , 0 , 0 )
+    else:
+        base = geompy.MakeBoxDXDYDZ(base_x * (n_active + 0) , base_y , base_z)
 
     for i in range( 0 , n_active): #insert all the active regions into the chip
         x_pos = base_x * ( i + 0.5)
         ridge_cut = geompy.MakeTranslation(ridge , x_pos , 0 , z_pos)
-        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos)
+        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos+0.5)
         base = geompy.MakeCut(base , ridge_cut , True)
         base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
 
-    for i in range ( 1 , n_active): #create trenches halfway between each active region
+    for i in range ( 0 , n_active+1): #create trenches halfway between each active region
         x_pos = base_x * i
         trench_cut = geompy.MakeTranslation(trench , x_pos , 0 , base_z - trench_z)
         base = geompy.MakeCut(base , trench_cut , True)
 
     if back_facet_trench: #create a back facet trench if there is a back facet monitor present
-        back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , trench_x , trench_z)
-        back_facet_trench = geompy.MakeTranslation(back_trench, -base_x , base_y-250 , base_z - trench_z )
+        back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 0) , 20 , trench_z)
+        back_facet_trench = geompy.MakeTranslation(back_trench, 0, base_y-285 , base_z - trench_z )
+        base = geompy.MakeCut(base , back_facet_trench , True)
+        back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , 20 , trench_z)
+        back_facet_trench = geompy.MakeTranslation(back_trench, -base_x/2 , base_y-15 , base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
 
     partition_array = np.append(partition_array  ,base) 
@@ -119,7 +125,9 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True):
     if device.ext_sink_mat !=0:
        ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
        ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-10 , -ext_sink_z)
+       #ext_sink = geompy.MakeTranslation(ext_sink , -200,-10 , -ext_sink_z)
        partition_array = np.append(partition_array , ext_sink)
+
     #need to add a therml paste layer if there is a chuck/ cartride. Set thickness of 50um sitting directly underneath the submount
     if data.cartridge_mat !=0:
         therm_paste = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,50)
@@ -226,7 +234,7 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     OZ = geompy.MakeVectorDXDYDZ(0, 0, 1)
 
     #multi_ridge = create_ridges (data , geompy)
-    chip, multi_ridge = create_device( data ,  geompy , back_facet_trench=True, middle_y=False)
+    chip, multi_ridge = create_device( data ,  geompy , back_facet_trench=True, middle_y=False, extra_width= True)
 
     if data.cartridge_mat!=0:
         adams_partition = []
@@ -254,8 +262,8 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
         if data.thermistor_mat!=0: #thermistor present
             geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:]) #reverse order goes: thermisotr, Sink, base , ridges - chronological order
         else:
-            geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:]) #reverse order goes: Sink, base , ridges - chronological order
-
+            #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:]) #reverse order goes: Sink, base , ridges - chronological order
+            geompy.UnionList(sub_mesh_auto_group, partition_exploded[:-1])
     geompy.addToStudy( O, 'O' )
     geompy.addToStudy( OX, 'OX' )
     geompy.addToStudy( OY, 'OY' )
@@ -320,6 +328,6 @@ elif sweeping_V == 7:
 elif sweeping_V ==0:
     pass
 elif sweeping_V == 9:
-    device.thermal_resistance = V
+    device.ext_sink_dim[2] = V
 
 new_mesh_ext_sink(device, arg1)

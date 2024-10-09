@@ -36,12 +36,18 @@ if True:
 
         #copying and saving of design, results and logs to relative folders
         shutil.copy(f"{project_name}/temp_save.unv" , f"../../../Projects/Projects/{project_name}/UNV/{V}.unv")
-        shutil.copy(f"{project_name}/case_t0001.vtu" , f"../../../Projects/Projects/{project_name}/VTU/{V}.vtu")
         shutil.copy(f"{project_name}/convergence_log.log" , f"../../../Projects/Projects/{project_name}/Logs/{V}.log")
+        while True:
+            try:
+                shutil.copy(f"{project_name}/case_t0001.vtu" , f"../../../Projects/Projects/{project_name}/VTU/{V}.vtu")
+                os.chdir("C:/Paraview/Paraview/bin")
+                os.system(f"pvbatch.exe ./Perry_Paraview_nemo.py {project_name} {V} {sweeping_V}")
+                os.chdir("../../..")
+            except:
+                print("####System likely diverged, cannot solve using Elmer ####")
+            break
         #Run Paraview to process output data
-        os.chdir("C:/Paraview/Paraview/bin")
-        os.system(f"pvbatch.exe ./Perry_Paraview_nemo.py {project_name} {V} {sweeping_V}")
-        os.chdir("../../..")
+ 
 else:
     pass
 

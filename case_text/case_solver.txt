@@ -6,7 +6,7 @@
   Stabilize = True
   Optimize Bandwidth = True
   Steady State Convergence Tolerance = 1.0e-5
-  Nonlinear System Convergence Tolerance = 1.0e-7
+  Nonlinear System Convergence Tolerance = 1.0e-9
   Nonlinear System Max Iterations = 20
   Nonlinear System Newton After Iterations = 3
   Nonlinear System Newton After Tolerance = 1.0e-3

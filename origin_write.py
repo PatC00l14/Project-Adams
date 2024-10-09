@@ -152,7 +152,7 @@ def write_body_forces(device, file):
             pass
     return() 
 
-def write_initial_conds(file ,T_init = 25): #initial temp of all objects, doesnt matter too much for steady state simulations 
+def write_initial_conds(file ,T_init = 60): #initial temp of all objects, doesnt matter too much for steady state simulations 
     init_c = f'Initial Condition 1\n  Name = "Initial Temperature"\n  Temperature = {T_init}\nEnd'
     file.write(init_c)
     return()

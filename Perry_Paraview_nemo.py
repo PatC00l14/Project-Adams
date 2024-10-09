@@ -38,6 +38,8 @@ elif sweeping_V == 6:
 elif sweeping_V == 7:
     device1. z_ridge = V
     pass_string = 'z_ridge'
+elif sweeping_V == 9:
+    pass_string = 'Sink_Height'
 elif sweeping_V ==0:
     pass
 
@@ -101,6 +103,7 @@ def save_data(f_name,device):
     
 
     [dx ,dy ,dz] = device.device_dim #chip dimensions in um
+    dy = dy - 250
     dz = dz + device.z_ridge
     subm_z = device.ext_sink_dim[2] #z scale of submount / heat sink
     n_c = device.n_chips #number of chip
