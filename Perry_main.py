@@ -4,6 +4,7 @@ import os
 import shutil
 import pandas as pd
 from Perry_1 import create_directories, copy_scripts
+from Perry_active import perry_active
 
 
 def main():
@@ -68,7 +69,8 @@ def main():
     copy_scripts(project_name , sweeping_V)
 
 
-    os.system(f"python Perry_active.py {project_name} {v0} {v1} {delv} {sweeping_V}")
+    #os.system(f"python Perry_active.py {project_name} {v0} {v1} {delv} {sweeping_V}")
+    perry_active(project_name, v0, v1, delv, sweeping_V)
     os.system(f"python C:/Projects/Projects/{project_name}/XPythonPostProcessing.py {project_name} {sweeping_V}")
 
     print('########################################################')

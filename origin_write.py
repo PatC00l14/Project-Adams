@@ -26,8 +26,8 @@ class MySemiconductor:
         self.ext_sink_mat = int(input_dat[1,15])
         #front and back facet details
         self.thermal_resistance = float(input_dat[1,16])
-        self.ffront_mat = int(input_dat[1,17])
-        self.fback_y = float(input_dat[1,18])
+        self.au_cap = float(input_dat[1,17])
+        self.bfm = float(input_dat[1,18])
         self.thermistor_dim = input_dat[1:4,19].astype(float)
         self.thermistor_mat = int(input_dat[1,20])
 
@@ -80,10 +80,14 @@ def write_bodies( device,file):
                         count += 1
                     else:
                         body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + '\n'
+            
+
             num = (c+1)*(n_r*n_l + 3 + t_count) - 2 - t_count
+
             body_string = body_string + write_ind_body(num, device.device_mat , 0) + '\n' #chip base
             body_string = body_string + write_ind_body(num+1, device.ext_sink_mat , 0) + '\n'#chip submount
             body_string = body_string + write_ind_body(num+2, 9 , 0) + '\n'#submount thermal paste
+
             if t_count ==1:
                 body_string = body_string + write_ind_body(num + 2 + t_count, device.thermistor_mat , 0) + '\n'#thermistor on submount
 
@@ -103,13 +107,22 @@ def write_bodies( device,file):
                 else:
                     body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + f'\n'
         num = (n_r*n_l) + 1
+        
+
+        if device.au_cap != 0 :
+            for i in range(int(3*n_r)):
+                body_string = body_string + write_ind_body(num + i, 2, 0)  
+            num += int(3*(n_r))
+
         body_string = body_string + write_ind_body(num , device.device_mat , 0) + f'\n' #chip base
         num +=1
         if device.ext_sink_mat !=0:
             body_string = body_string + write_ind_body(num, device.ext_sink_mat , 0) + '\n'#chip submount
-            num +=1
+            #body_string = body_string + write_ind_body(num+1, 9 , 0) + '\n'#chip submount
+            num +=2
         if t_count ==1:
                 body_string = body_string + write_ind_body(num + 1 + t_count, device.thermistor_mat , 0) + '\n'#thermistor on submount
+        
     file.write(f'{body_string}')
     return()
 
@@ -157,7 +170,7 @@ def write_initial_conds(file ,T_init = 60): #initial temp of all objects, doesnt
     file.write(init_c)
     return()
 
-def write_boundary_conds(boundary , file ,T_sink = 25): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
+def write_boundary_conds(boundary , file ,T_sink = 80): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
     #here we need the boundary number of the lowest boundary (which was far too much effort to determing from the stupid Salome simulations)
     bound_cond = f'Boundary Condition 1\n  Target Boundaries(1) = {boundary}\n  Name = "Heat Sink"\n  Temperature = {T_sink}\nEnd'
     file.write(bound_cond)

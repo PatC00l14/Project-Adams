@@ -84,7 +84,7 @@ Material 9
   Heat Capacity = 700
   Density = 2500
   Porosity Model = Always saturated
-  Heat Conductivity = 10
+  Heat Conductivity = 10000
 End
 
 Material 10
