@@ -4,16 +4,14 @@ import shutil
 import os 
 import numpy as np
 from global_write import global_writeX
-#from origin_write import MySemiconductor
-
+from origin_write import MySemiconductor
 #import device data using MySemiconductor class - to be called from other programs
 
 def perry_active(project_name, v0, v1, delv, sweeping_V):
 
     #project_name = sys.argv[1]
-    #v0 = float(sys.argv[2]) ; v1 = float(sys.argv[3]) ;delv = float(sys.argv[4])
+    #v0 = float(sys.argv[2]) ; v1 = float(sys.argv[3]) ;delv = float(sys.argv[4]
     #sweeping_V = int(sys.argv[5]) #getting sweeping parameter index
-    
     
     if delv ==0: #when the simulation is not sweeping a variable
         variable = np.array([0])

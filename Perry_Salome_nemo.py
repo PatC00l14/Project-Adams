@@ -11,13 +11,14 @@ from origin_write import MySemiconductor
 salome.salome_init()
 import salome_notebook
 notebook = salome_notebook.NoteBook()
-sys.path.insert(0,r'C:/Users/pmillar/Documents/Internship 2024/Week 4/Salome')
 
 import GEOM
 from salome.geom import geomBuilder
 import SALOMEDS
 import  SMESH, SALOMEDS
 from salome.smesh import smeshBuilder
+
+
 
 def write_boundary_conds(boundary1 , arg0 ,dat, boundary2 = 0): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
     #here we need the boundary number of the lowest boundary (which was far too much effort to determing from the stupid Salome simulations)
@@ -87,9 +88,15 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
 
     trench = geompy.MakeBoxDXDYDZ(trench_x , trench_y + data.bfm , trench_z+20)
     trench = geompy.MakeTranslation(trench , -trench_x/2 , 0 , 0 )
+
+    au_trench = geompy.MakeBoxDXDYDZ(trench_x+20 , trench_y + data.bfm , trench_z+20)
+    au_trench = geompy.MakeTranslation(au_trench , -(trench_x+20)/2 , 0 , 0 )
     
     ridge_trench = geompy.MakeBoxDXDYDZ(22 , base_y, 10 )
     ridge_trench = geompy.MakeTranslation(ridge_trench , -11 , 0 , 0)
+
+    au_ridge_trench = geompy.MakeBoxDXDYDZ(30 , base_y, 10 )
+    au_ridge_trench = geompy.MakeTranslation(au_ridge_trench , -15 , 0 , 0)
     
     if extra_width:
         extra_width = 1
@@ -115,15 +122,17 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
         if data.au_cap !=0:
-            au_ar_cap = geompy.MakeCut(au_ar_cap, ridge_trench_cut)
+            au_ridge_trench_cut = geompy.MakeTranslation(au_ridge_trench,x_pos , 0 , z_pos+0.5)
+            au_ar_cap = geompy.MakeCut(au_ar_cap, au_ridge_trench_cut)
 
     for i in range ( 0 , n_active+1): #create trenches halfway between each active region
         x_pos = base_x * i
         trench_cut = geompy.MakeTranslation(trench , x_pos , 0 , base_z - trench_z)
         base = geompy.MakeCut(base , trench_cut , True)
         if data.au_cap!=0:
-            au_ar_cap = geompy.MakeCut(au_ar_cap, trench_cut)
-            au_bfm_cap = geompy.MakeCut(au_bfm_cap, trench_cut)
+            au_trench_cut = geompy.MakeTranslation(au_trench,x_pos , 0 , base_z - trench_z )
+            au_ar_cap = geompy.MakeCut(au_ar_cap, au_trench_cut)
+            au_bfm_cap = geompy.MakeCut(au_bfm_cap, au_trench_cut)
     
     
 
@@ -298,7 +307,7 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
             geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:]) #reverse order goes: thermisotr, Sink, base , ridges - chronological order
         else:
             #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:]) #reverse order goes: Sink, base , ridges - chronological order
-            geompy.UnionList(sub_mesh_auto_group, partition_exploded[:-1])
+            geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:])
     geompy.addToStudy( O, 'O' )
     geompy.addToStudy( OX, 'OX' )
     geompy.addToStudy( OY, 'OY' )
@@ -363,6 +372,6 @@ elif sweeping_V == 7:
 elif sweeping_V ==0:
     pass
 elif sweeping_V == 9:
-    device.ext_sink_dim[2] = V
+    device.au_cap = V
 
 new_mesh_ext_sink(device, arg1)

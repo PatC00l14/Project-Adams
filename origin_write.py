@@ -1,7 +1,13 @@
 import numpy as np
 import os
 import sys
+
 import_variable = 101
+
+instance_to_transfer = 14 #:)
+
+
+
 
 class MySemiconductor:
     def __init__(self, input_dat):

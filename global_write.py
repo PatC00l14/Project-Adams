@@ -6,9 +6,6 @@ import pandas as pd
 def global_writeX(arg0, sweeping_V, V):
 
     device0 = MySemiconductor(pd.read_csv('input_csv.csv').to_numpy())
-    #arg0 = sys.argv[1]
-    #sweeping_V = int(sys.argv[2]) #sweeping argument index
-    #V = float(sys.argv[3]) 
     
     if sweeping_V == 8: #sweeping the device power
         for i in range(device0.n_layers):

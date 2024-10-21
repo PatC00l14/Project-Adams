@@ -5,10 +5,16 @@ import shutil
 import pandas as pd
 from Perry_1 import create_directories, copy_scripts
 from Perry_active import perry_active
+from XPythonPostProcessing import XXPy_postproc
+from origin_write import MySemiconductor
+
+
+pandas_data = pd.read_csv('C:/Projects/Perry_run/input_csv.csv').to_numpy()
+device_instance = MySemiconductor(pandas_data) #put data into MySemiconductor class
 
 
 def main():
-    project_name = input("What is the name of your project?")
+    project_name = input(f"What is the name of your project?")
     print('Which variable would you like to sweep?')
     while True:
         try:
@@ -71,8 +77,8 @@ def main():
 
     #os.system(f"python Perry_active.py {project_name} {v0} {v1} {delv} {sweeping_V}")
     perry_active(project_name, v0, v1, delv, sweeping_V)
-    os.system(f"python C:/Projects/Projects/{project_name}/XPythonPostProcessing.py {project_name} {sweeping_V}")
-
+    XXPy_postproc(project_name, sweeping_V)
+    
     print('########################################################')
     print(f'Project: {project_name} complete')
     print('########################################################')
