@@ -7,10 +7,10 @@
   Optimize Bandwidth = True
   Steady State Convergence Tolerance = 1.0e-5
   Nonlinear System Convergence Tolerance = 1.0e-12
-  Nonlinear System Max Iterations = 40
+  Nonlinear System Max Iterations = 30
   Nonlinear System Newton After Iterations = 3
   Nonlinear System Newton After Tolerance = 1.0e-3
-  Nonlinear System Relaxation Factor = 1
+  Nonlinear System Relaxation Factor = 0.6
   Linear System Solver = Iterative
   Linear System Iterative Method = BiCGStab
   Linear System Max Iterations = 500

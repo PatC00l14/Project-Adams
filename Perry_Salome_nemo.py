@@ -169,9 +169,6 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
            h_cond_block = geompy.MakeTranslation(h_cond_block, (n_active * base_x - ext_sink_x) / 2 ,-10 , -(ext_sink_z+h_condz))
            partition_array = np.append(partition_array, h_cond_block)
 
-
-    
-
     #need to add a therml paste layer if there is a chuck/ cartride. Set thickness of 50um sitting directly underneath the submount
     if data.cartridge_mat !=0:
         therm_paste = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,50)
@@ -225,22 +222,22 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
     Gmsh_Parameters.SetSizeFactor( fine_mesh) #RIDGE MESH
     Gmsh_Parameters.SetIs2d( 0 )
     #Sub mesh group is meshed first. Set at a lower mesh quality to avoid over meshing in larger geometries
-    GMSH_1_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH , geom = sub_mesh_group)
-    Gmsh_Parameters_1 = GMSH_1_1.Parameters()
-    Gmsh_Parameters_1.Set2DAlgo( 0 )
-    Gmsh_Parameters_1.SetMinSize( 0 ) #minimum mesh size
-    Gmsh_Parameters_1.SetMaxSize( 1e+22 ) #maximum mesh size
-    Gmsh_Parameters_1.SetSizeFactor( coarse_mesh ) #BODY MESH
-    Gmsh_Parameters_1.SetIs2d( 0 )
+    sub_mesh = True
+    if sub_mesh:
+        GMSH_1_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH , geom = sub_mesh_group)
+        Gmsh_Parameters_1 = GMSH_1_1.Parameters()
+        Gmsh_Parameters_1.Set2DAlgo( 0 )
+        Gmsh_Parameters_1.SetMinSize( 0 ) #minimum mesh size
+        Gmsh_Parameters_1.SetMaxSize( 1e+22 ) #maximum mesh size
+        Gmsh_Parameters_1.SetSizeFactor( coarse_mesh ) #BODY MESH
+        Gmsh_Parameters_1.SetIs2d( 0 )
     
     isDone = Mesh_1.Compute()
     return(Mesh_1)
 
 def find_face_of_god(smesh , group_array, data):
 
-    fog = open(f'C:/Projects/bin_extinct/why_would_this_happen.txt' , 'w')
-    fog.close()
-    fog = open(f'C:/Projects/bin_extinct/why_would_this_happen.txt' , 'a')
+
     temp_z = 1
     f_o_g2 = 0
     for i  in range(0 , len(group_array)):
@@ -250,13 +247,10 @@ def find_face_of_god(smesh , group_array, data):
                 if BBox.minZ < temp_z:
                     temp_z = BBox.minZ
                     f_o_g = i + 1
-                    fog.write(f'face{f_o_g} - minZ={temp_z} \n')
+
                 if data.cartridge_mat ==0 and BBox.minZ == 0 and data.thermal_resistance !=0:
                     f_o_g2 = i+1
 
-                    
-    fog.write(f'{f_o_g2}')
-    fog.close()
     return(int(f_o_g), int(f_o_g2))
 
 def create_solid_array(Mesh_1 , partition_exploded):
@@ -307,7 +301,7 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
             geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:]) #reverse order goes: thermisotr, Sink, base , ridges - chronological order
         else:
             #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:]) #reverse order goes: Sink, base , ridges - chronological order
-            geompy.UnionList(sub_mesh_auto_group, partition_exploded[-1:])
+            geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
     geompy.addToStudy( O, 'O' )
     geompy.addToStudy( OX, 'OX' )
     geompy.addToStudy( OY, 'OY' )
@@ -332,6 +326,9 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     
     write_boundary_conds(f_o_g, arg0, data, boundary2=f_o_g2) #can add convection boundaries if interested
 
+    print('#####################################################')
+    print(pd.__file__)
+    print('#####################################################')
     return(f_o_g)
     
 
