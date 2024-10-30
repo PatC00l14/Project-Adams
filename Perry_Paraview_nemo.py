@@ -103,8 +103,7 @@ def save_data(f_name,device):
     
 
     [dx ,dy ,dz] = device.device_dim #chip dimensions in um
-    dy = dy - 250
-    dz = dz + device.z_ridge
+    dz = dz + device.z_ridge - np.sum(device.r_heights[1:])
     subm_z = device.ext_sink_dim[2] #z scale of submount / heat sink
     n_c = device.n_chips #number of chip
     n_r = device.n_ridges #number of ridges per chip

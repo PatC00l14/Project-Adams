@@ -84,6 +84,7 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     [trench_x, trench_y , trench_z] = data.trench_dim
     [ext_sink_x,ext_sink_y,ext_sink_z] = data.ext_sink_dim
     n_active = data.n_ridges
+
     z_pos = base_z  - np.sum(data.r_heights)
 
     trench = geompy.MakeBoxDXDYDZ(trench_x , trench_y + data.bfm , trench_z+20)
@@ -117,7 +118,7 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     for i in range( 0 , n_active): #insert all the active regions into the chip
         x_pos = base_x * ( i + 0.5)
         ridge_cut = geompy.MakeTranslation(ridge , x_pos , 0 , z_pos)
-        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos+0.5)
+        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos + np.sum(data.r_heights[:2]))
         base = geompy.MakeCut(base , ridge_cut , True)
         base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
@@ -218,8 +219,8 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
     Gmsh_Parameters = GMSH.Parameters()
     Gmsh_Parameters.Set2DAlgo( 0 )
     Gmsh_Parameters.SetMinSize( 0 ) #minimum mesh size
-    Gmsh_Parameters.SetMaxSize( 1e+22 ) #maximum mesh size 
-    Gmsh_Parameters.SetSizeFactor( fine_mesh) #RIDGE MESH
+    Gmsh_Parameters.SetMaxSize( fine_mesh ) #maximum mesh size 
+    Gmsh_Parameters.SetSizeFactor( 1) #RIDGE MESH
     Gmsh_Parameters.SetIs2d( 0 )
     #Sub mesh group is meshed first. Set at a lower mesh quality to avoid over meshing in larger geometries
     sub_mesh = True
@@ -228,8 +229,8 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
         Gmsh_Parameters_1 = GMSH_1_1.Parameters()
         Gmsh_Parameters_1.Set2DAlgo( 0 )
         Gmsh_Parameters_1.SetMinSize( 0 ) #minimum mesh size
-        Gmsh_Parameters_1.SetMaxSize( 1e+22 ) #maximum mesh size
-        Gmsh_Parameters_1.SetSizeFactor( coarse_mesh ) #BODY MESH
+        Gmsh_Parameters_1.SetMaxSize( coarse_mesh ) #maximum mesh size
+        Gmsh_Parameters_1.SetSizeFactor( 1 ) #BODY MESH
         Gmsh_Parameters_1.SetIs2d( 0 )
     
     isDone = Mesh_1.Compute()
