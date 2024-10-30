@@ -54,7 +54,7 @@ def create_directories(proj_name):
 def copy_scripts(proj_name, sweep_ind):
     """"copy the necessary scripts to correct directories for Salome / Elmer / Paraview to operate"""
     shutil.copy(f'C:/Projects/Perry_run/Input_csv.csv', f'C:/Projects/Projects//{proj_name}/Input_data/input_{sweep_ind}.csv')
-    shutil.copy(f'C:/Projects/Perry_run/XPythonPostProcessing.py' ,  f'C:/Projects/Projects/{proj_name}/XPythonPostProcessing.py')
+    #shutil.copy(f'C:/Projects/Perry_run/XPythonPostProcessing.py' ,  f'C:/Projects/Projects/{proj_name}/XPythonPostProcessing.py')
     shutil.copy(f'C:/Projects/Perry_run/Perry_Paraview_nemo.py' , f'C:/Paraview/Paraview/bin/Perry_Paraview_nemo.py')
     shutil.copy(f'C:/Projects/Perry_run/Perry_Salome_nemo.py' , 'C:/SALOME-9.12.0/W64/Python/Perry_Salome_nemo.py')
     os.system(f'echo > C:/ElmerFEM/ElmerFEM/bin/{proj_name}/case.sif')

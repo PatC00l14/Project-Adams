@@ -37,7 +37,7 @@ def XXPy_postproc(project_name, sweeping_v):
                 axs[0].plot(Y*10**6,T , label = fname)
                 if sweeping_v !=0:
                     try:
-                        axs[2].errorbar(float(fname[:-8]),np.max(T) ,yerr = 2 * np.std(T))
+                        axs[2].plot(float(fname[:-8]),np.max(T))
                         axs[2].plot(float(fname[:-8]),np.max(T) , 'ro', markersize=3)
                     except:
                         pass

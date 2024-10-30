@@ -106,6 +106,9 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     
     base = geompy.MakeBoxDXDYDZ(base_x * (n_active + extra_width) , base_y + data.bfm, base_z)
     base = geompy.MakeTranslation(base , (-base_x / 2) * extra_width , 0 , 0 )
+
+    base_0 = geompy.MakeBoxDXDYDZ(base_x * (n_active + extra_width) , base_y + data.bfm, base_z - 30)
+    base_0 = geompy.MakeTranslation(base_0, (-base_x / 2) * extra_width , 0 , 0 )
     
     if data.au_cap !=0:
         au_z = data.au_cap
@@ -118,7 +121,7 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     for i in range( 0 , n_active): #insert all the active regions into the chip
         x_pos = base_x * ( i + 0.5)
         ridge_cut = geompy.MakeTranslation(ridge , x_pos , 0 , z_pos)
-        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos + np.sum(data.r_heights[:2]))
+        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos + np.sum(data.r_heights[:3]))
         base = geompy.MakeCut(base , ridge_cut , True)
         base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
@@ -155,8 +158,9 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         partition_array = np.append(partition_array, au_ar_cap)
         partition_array = np.append(partition_array, au_bfm_cap)
 
-    
-    partition_array = np.append(partition_array  ,base) 
+    base = geompy.MakeCut(base, base_0) #separate upper and main part of the chip as a viscous layer
+    partition_array = np.append(partition_array, base)
+    partition_array = np.append(partition_array, base_0) 
 
     #add submount or external_heatsink
     if device.ext_sink_mat !=0:
@@ -236,6 +240,44 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
     isDone = Mesh_1.Compute()
     return(Mesh_1)
 
+def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
+    
+    bdy_dim = sc_data.bdy_mesh ; r_dim = sc_data.r_mesh
+
+    Mesh_1 = smesh.Mesh(fin_partition,'Mesh_1')
+    NETGEN_1D_2D_3D = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
+    NETGEN_3D_Parameters_1 = NETGEN_1D_2D_3D.Parameters()
+    NETGEN_3D_Parameters_1.SetMaxSize( r_dim )
+    NETGEN_3D_Parameters_1.SetMinSize( 2 )
+    NETGEN_3D_Parameters_1.SetSecondOrder( 0 )
+    NETGEN_3D_Parameters_1.SetOptimize( 1 )
+    NETGEN_3D_Parameters_1.SetFineness( 1 )
+    NETGEN_3D_Parameters_1.SetChordalError( -1 )
+    NETGEN_3D_Parameters_1.SetChordalErrorEnabled( 0 )
+    NETGEN_3D_Parameters_1.SetUseSurfaceCurvature( 1 )
+    NETGEN_3D_Parameters_1.SetFuseEdges( 1 )
+    NETGEN_3D_Parameters_1.SetQuadAllowed( 0 )
+    NETGEN_3D_Parameters_1.SetCheckChartBoundary( 176 )
+
+    NETGEN_1D_2D_3D_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sub_mesh_group)
+    NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
+    NETGEN_3D_Parameters_2.SetMaxSize( bdy_dim )
+    NETGEN_3D_Parameters_2.SetMinSize( 30)
+    NETGEN_3D_Parameters_2.SetSecondOrder( 0 )
+    NETGEN_3D_Parameters_2.SetOptimize( 1 )
+    NETGEN_3D_Parameters_2.SetFineness( 2 )
+    NETGEN_3D_Parameters_2.SetChordalError( -1 )
+    NETGEN_3D_Parameters_2.SetChordalErrorEnabled( 0 )
+    NETGEN_3D_Parameters_2.SetUseSurfaceCurvature( 1 )
+    NETGEN_3D_Parameters_2.SetFuseEdges( 1 )
+    NETGEN_3D_Parameters_2.SetQuadAllowed( 0 )
+    NETGEN_3D_Parameters_2.SetCheckChartBoundary( 176 )
+
+    isDone = Mesh_1.Compute()
+
+    return(Mesh_1)
+
+
 def find_face_of_god(smesh , group_array, data):
 
 
@@ -314,7 +356,14 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
         geompy.addToStudyInFather( chip, partition_exploded[i], f'Solid_{i}' )
     
     smesh = smeshBuilder.New()
-    Mesh_1 = create_mesh(data , adams_partition , sub_mesh_auto_group, smesh)
+
+    netgen = True
+
+    if netgen:
+        Mesh_1 = NETGEN_create_mesh(data, adams_partition, sub_mesh_auto_group, smesh)
+    else:
+        Mesh_1 = create_mesh(data , adams_partition , sub_mesh_auto_group, smesh)
+    
     solid_array , group_array = create_solid_array(Mesh_1 , partition_exploded)
 
     f_o_g, f_o_g2 = find_face_of_god(smesh , group_array, data) 

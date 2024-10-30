@@ -1,10 +1,10 @@
 ﻿Device ,,,,Layer Physical properties (um),,,,,,,Mesh characteristic length (um),,,Ext heat sink,,Thermal Resistance (W/K),,,Thermistor,,Trench,Cartidge,,No of chips
 No. of ridges,Ridges ON,"Device x,y,z (um)",Material,No of Layers,Height,Widths,Length,Material,Heat Power (W),Heat sink temp (C ),Body ,Ridges,ridge_height,"x,y,z(um)",material,,Au Cap,BFM / LM,Dimension,Material,"Trench (x,y,z)",Material,Dimensions(mm),
-8,1,250,11,4,3,10,750,11,0,53.2,10,1,-0.19,4000,7,0,0,250,10000,0,10,0,180,3
-,1,750,,,0.5,10,750,10,0.462,,,,,3000,,,,,10000,,2000,,15,
-,1,300,,,1.1,2.2,750,11,0.154,,,,,300,,,,,400,,10,,12,
+8,1,250,11,5,1.5,10,750,11,0,53.2,50,10,-0.19,4000,7,0,0,250,10000,0,10,0,180,3
+,1,750,,,1.5,10,750,11,0,,,,,4000,,,,,10000,,2000,,15,
+,1,300,,,0.5,10,750,10,0.462,,,,,625,,,,,400,,10,,12,
+,1,,,,1.1,2.2,750,11,0.154,,,,,,,,,,,,,,,
 ,1,,,,0.4,2.2,750,11,0.154,,,,,,,,,,,,,,,
-,1,,,,,,,,,,,,,,,,,,,,,,,
 ,1,,,,,,,,,,,,,,,,,,,,,,,
 ,1,,,,,,,,,,,,,,,,,,,,,,,
 ,1,,,,,,,,,,,,,,,,,,,,,,,

@@ -120,8 +120,9 @@ def write_bodies( device,file):
                 body_string = body_string + write_ind_body(num + i, 2, 0)  
             num += int(3*(n_r))
 
-        body_string = body_string + write_ind_body(num , device.device_mat , 0) + f'\n' #chip base
-        num +=1
+        body_string = body_string + write_ind_body(num , device.device_mat , 0) + f'\n' #chip base viscouse upper
+        body_string = body_string + write_ind_body(num +1 , device.device_mat , 0) + f'\n' #chip base
+        num +=2
         if device.ext_sink_mat !=0:
             body_string = body_string + write_ind_body(num, device.ext_sink_mat , 0) + '\n'#chip submount
             #body_string = body_string + write_ind_body(num+1, 9 , 0) + '\n'#chip submount
