@@ -13,27 +13,19 @@ import salome_notebook
 notebook = salome_notebook.NoteBook()
 
 import GEOM
-from salome.geom import geomBuilder
-import SALOMEDS
+from salome.geom import geomBuilder 
 import  SMESH, SALOMEDS
 from salome.smesh import smeshBuilder
 
 
 
-def write_boundary_conds(boundary1 , arg0 ,dat, boundary2 = 0): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
+def write_boundary_conds(boundary1 , arg0 ,dat): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
     #here we need the boundary number of the lowest boundary (which was far too much effort to determing from the stupid Salome simulations)
     mypath = f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/'
     path = os.path.join(mypath , 'case.sif')
     
     bound_cond1 = f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {boundary1}\n  Name = "Heat Sink"\n  Temperature = {dat.T_sink}\nEnd'
     
-    
-    if boundary2 !=0:
-        #heat_transfer_coeff = 10**12 / (dat.thermal_resistance *  dat.device_dim[0] * dat.device_dim[1] * dat.n_ridges)
-        heat_transfer_coeff = dat.thermal_resistance*10**23
-        bound_cond2 = f'\n\nBoundary Condition 2\n  Target Boundaries(1) = {boundary2}\n  Name = "Thermal resistance"\n  Heat Transfer Coefficient = {heat_transfer_coeff}\n  Heat Gap = True\nEnd'
-        bound_cond1 += bound_cond2
-
     
     try:
         file = open(path , 'a') 
@@ -71,6 +63,54 @@ def create_ridges(sc_data , geompy, middle_y = True): #this function creates the
     combined_ridge = geompy.MakePartition(ridge_partition.tolist(), [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
 
     return(combined_ridge)
+
+def create_insulating_layer(data, geompy):
+
+    [base_x , base_y , base_z] = data.device_dim
+
+    insul_layer = geompy.MakeBoxDXDYDZ(base_x, base_y, data.insul_z)
+    insul_layer = geompy.MakeTranslation(insul_layer, 0, 0, base_z) # insulation layer directly abover the device
+    au_layer = geompy.MakeBoxDXDYDZ(base_x, base_y, data.au_cap + data.insul_z)
+    au_layer = geompy.MakeTranslation(au_layer, 0, 0, base_z) #au layer is sittig above the insulation layer - however it is cut away rather than moved above
+
+    return()
+
+def creat_au_caps(data, geompy, part_array):
+
+    n_active = data.n_ridges
+
+    [base_x , base_y , base_z] = data.device_dim
+    [trench_x, trench_y , trench_z] = data.trench_dim
+
+    au_trench = geompy.MakeBoxDXDYDZ(trench_x+20 , trench_y + data.bfm , trench_z+20)
+    au_trench = geompy.MakeTranslation(au_trench , -(trench_x+20)/2 , 0 , 0 )
+
+    au_ridge_trench = geompy.MakeBoxDXDYDZ(30 , base_y, 10 )
+    au_ridge_trench = geompy.MakeTranslation(au_ridge_trench , -15 , 0 , 0)
+
+    au_z = data.au_cap
+    au_ar_cap = geompy.MakeBoxDXDYDZ(n_active*base_x, base_y, au_z)
+    au_ar_cap = geompy.MakeTranslation(au_ar_cap, 0 , 0 , base_z)
+    au_bfm_cap = geompy.MakeBoxDXDYDZ(n_active*base_x, data.bfm - 15, au_z)
+    au_bfm_cap = geompy.MakeTranslation(au_bfm_cap, 0 , base_y + 15, base_z)
+
+    z_pos = base_z  - np.sum(data.r_heights)
+
+    for i in range(n_active):
+            x_pos = base_x * ( i + 0.5)
+            au_ridge_trench_cut = geompy.MakeTranslation(au_ridge_trench,x_pos , 0 , z_pos+0.5)
+            au_ar_cap = geompy.MakeCut(au_ar_cap, au_ridge_trench_cut)
+
+    for i in range(n_active+1):
+        x_pos = base_x * i
+        au_trench_cut = geompy.MakeTranslation(au_trench,x_pos , 0 , base_z - trench_z )
+        au_ar_cap = geompy.MakeCut(au_ar_cap, au_trench_cut)
+        au_bfm_cap = geompy.MakeCut(au_bfm_cap, au_trench_cut)
+
+    part_array = np.append(part_array, au_ar_cap)
+    part_array = np.append(part_array, au_bfm_cap)
+
+    return(part_array)
 
 
 def create_device ( data, geompy, back_facet_trench = False, middle_y = True, extra_width = True):
@@ -166,9 +206,9 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     if device.ext_sink_mat !=0:
        ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
        ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-100 , -ext_sink_z)
-       h_condz = 500
-       #ext_sink = geompy.MakeTranslation(ext_sink , -200,-10 , -ext_sink_z)
+       #ext_sink = geompy.MakeTranslation(ext_sink , -200,-10 , -ext_sink_z) #use for calibration when chip is at the edge of the sink
        partition_array = np.append(partition_array , ext_sink)
+       h_condz = 500
        if 1 == 2:
            h_cond_block = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,h_condz)
            h_cond_block = geompy.MakeTranslation(h_cond_block, (n_active * base_x - ext_sink_x) / 2 ,-10 , -(ext_sink_z+h_condz))
@@ -243,29 +283,31 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
 def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
     
     bdy_dim = sc_data.bdy_mesh ; r_dim = sc_data.r_mesh
+    #ridge mesh properties 
 
     Mesh_1 = smesh.Mesh(fin_partition,'Mesh_1')
     NETGEN_1D_2D_3D = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
     NETGEN_3D_Parameters_1 = NETGEN_1D_2D_3D.Parameters()
     NETGEN_3D_Parameters_1.SetMaxSize( r_dim )
-    NETGEN_3D_Parameters_1.SetMinSize( 2 )
+    NETGEN_3D_Parameters_1.SetMinSize( 0.8)
     NETGEN_3D_Parameters_1.SetSecondOrder( 0 )
     NETGEN_3D_Parameters_1.SetOptimize( 1 )
-    NETGEN_3D_Parameters_1.SetFineness( 1 )
+    NETGEN_3D_Parameters_1.SetFineness( 4 )
     NETGEN_3D_Parameters_1.SetChordalError( -1 )
     NETGEN_3D_Parameters_1.SetChordalErrorEnabled( 0 )
     NETGEN_3D_Parameters_1.SetUseSurfaceCurvature( 1 )
     NETGEN_3D_Parameters_1.SetFuseEdges( 1 )
     NETGEN_3D_Parameters_1.SetQuadAllowed( 0 )
     NETGEN_3D_Parameters_1.SetCheckChartBoundary( 176 )
-
+    
+    #Body mesh properties 
     NETGEN_1D_2D_3D_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sub_mesh_group)
     NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
     NETGEN_3D_Parameters_2.SetMaxSize( bdy_dim )
-    NETGEN_3D_Parameters_2.SetMinSize( 30)
+    NETGEN_3D_Parameters_2.SetMinSize( 15)
     NETGEN_3D_Parameters_2.SetSecondOrder( 0 )
     NETGEN_3D_Parameters_2.SetOptimize( 1 )
-    NETGEN_3D_Parameters_2.SetFineness( 2 )
+    NETGEN_3D_Parameters_2.SetFineness( 3)
     NETGEN_3D_Parameters_2.SetChordalError( -1 )
     NETGEN_3D_Parameters_2.SetChordalErrorEnabled( 0 )
     NETGEN_3D_Parameters_2.SetUseSurfaceCurvature( 1 )
@@ -279,19 +321,19 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
 
 
 def find_face_of_god(smesh , group_array, data):
-
-
+    
+    #find the index of the face for the sink 
+    #this is required as there is not consistency for the numbering of each face with respect to creation order
     temp_z = 1
     f_o_g2 = 0
     for i  in range(0 , len(group_array)):
             BBox = smesh.GetBoundingBox(group_array[i])
-            
             if BBox.minZ == BBox.maxZ: 
                 if BBox.minZ < temp_z:
                     temp_z = BBox.minZ
                     f_o_g = i + 1
 
-                if data.cartridge_mat ==0 and BBox.minZ == 0 and data.thermal_resistance !=0:
+                if data.cartridge_mat == 0 and BBox.minZ == 0:
                     f_o_g2 = i+1
 
     return(int(f_o_g), int(f_o_g2))
@@ -374,7 +416,7 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     except:
       print('ExportUNV() failed. Invalid file name?')
     
-    write_boundary_conds(f_o_g, arg0, data, boundary2=f_o_g2) #can add convection boundaries if interested
+    write_boundary_conds(f_o_g, arg0, data) #can add convection boundaries if interested
 
     print('#####################################################')
     print(pd.__file__)

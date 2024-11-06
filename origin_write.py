@@ -31,8 +31,8 @@ class MySemiconductor:
         self.ext_sink_dim = input_dat[1:4, 14].astype(float)
         self.ext_sink_mat = int(input_dat[1,15])
         #front and back facet details
-        self.thermal_resistance = float(input_dat[1,16])
-        self.au_cap = float(input_dat[1,17])
+        self.au_cap = float(input_dat[1,16])
+        self.au_cap_mat = float(input_dat[1,17])
         self.bfm = float(input_dat[1,18])
         self.thermistor_dim = input_dat[1:4,19].astype(float)
         self.thermistor_mat = int(input_dat[1,20])
@@ -42,6 +42,9 @@ class MySemiconductor:
         self.cartridge_mat = int(input_dat[1,22])
         self.cartridge_dim = input_dat[1:4,23].astype(float)
         self.n_chips = int(input_dat[1, 24])
+
+        self.insul_mat = int(input_dat[1,1])
+        self.insul_z = float(input_dat[1,1])
 
 def write_header(proj_name,file):
     header = f'Header\n  CHECK KEYWORDS Warn\n  Mesh DB "{proj_name}" "dummy"\n  Include Path ""\n  Results Directory ""\nEnd\n\n'
@@ -115,9 +118,9 @@ def write_bodies( device,file):
         num = (n_r*n_l) + 1
         
 
-        if device.au_cap != 0 :
+        if device.au_cap_mat != 0 :
             for i in range(int(3*n_r)):
-                body_string = body_string + write_ind_body(num + i, 2, 0)  
+                body_string = body_string + write_ind_body(num + i, int(device.au_cap_mat), 0)  
             num += int(3*(n_r))
 
         body_string = body_string + write_ind_body(num , device.device_mat , 0) + f'\n' #chip base viscouse upper
@@ -201,7 +204,7 @@ def global_write(project_name , device):
     write_equation(my_file)
     write_materials(my_file)
     write_body_forces(device,my_file) #needs heat power for each ridge
-    write_initial_conds(my_file , T_init = 100)#can take in the a different initial temp if that is of interest
+    write_initial_conds(my_file , T_init = device.T_sink+10)#can take in the a different initial temp if that is of interest
     #write_boundary_conds -DO NOT EXECUTE HERE, needs Salome input so execute direclty from Salome script
     write_ESSI(project_name)
     my_file.close()
