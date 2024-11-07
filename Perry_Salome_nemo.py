@@ -62,18 +62,41 @@ def create_ridges(sc_data , geompy, middle_y = True): #this function creates the
 
     combined_ridge = geompy.MakePartition(ridge_partition.tolist(), [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
 
-    return(combined_ridge)
+    #need to find the ethch stop location
+    e_stop = 0
+    for i in range(1,n_ridges):
+        if widths[i]>widths[i-1]:
+            e_stop = np.sum(thicknesses[:i])
+    
+    return(combined_ridge, e_stop)
 
-def create_insulating_layer(data, geompy):
-
+def create_insulating_layer(data, geompy, device, e_stop):
+     
     [base_x , base_y , base_z] = data.device_dim
+    [trench_x, trench_y , trench_z] = data.trench_dim
+    n_ridges = data.n_ridges
+    
 
-    insul_layer = geompy.MakeBoxDXDYDZ(base_x, base_y, data.insul_z)
-    insul_layer = geompy.MakeTranslation(insul_layer, 0, 0, base_z) # insulation layer directly abover the device
+    insul_layer = geompy.MakeBoxDXDYDZ(base_x, base_y, data.insul_z + e_stop)
+    insul_layer = geompy.MakeTranslation(insul_layer, 0, 0, base_z - e_stop) # insulation layer directly abover the device
+
     au_layer = geompy.MakeBoxDXDYDZ(base_x, base_y, data.au_cap + data.insul_z)
     au_layer = geompy.MakeTranslation(au_layer, 0, 0, base_z) #au layer is sittig above the insulation layer - however it is cut away rather than moved above
 
-    return()
+    insul_layer = geompy.MakeCut(insul_layer, device)
+
+    au_ridge_ex = geompy.MakeBoxDXDYDZ(data.r_widths[0], base_y, data.insul_z)
+    au_ridge_ex = geompy.MakeTranslation(au_ridge_ex, -data.r_widths[0]/2, 0, 0)
+
+    for i in range(n_ridges):
+        au_ridge_ex_cut = geompy.MakeTranslation(au_ridge_ex, (i+0.5)*base_x, 0, base_z) 
+        insul_layer = geompy.MakeCut(insul_layer, au_ridge_ex_cut)
+    
+
+    au_layer = geompy.MakeCut(au_layer, insul_layer)       
+    
+
+    return(insul_layer, au_layer)
 
 def creat_au_caps(data, geompy, part_array):
 
@@ -82,11 +105,12 @@ def creat_au_caps(data, geompy, part_array):
     [base_x , base_y , base_z] = data.device_dim
     [trench_x, trench_y , trench_z] = data.trench_dim
 
-    au_trench = geompy.MakeBoxDXDYDZ(trench_x+20 , trench_y + data.bfm , trench_z+20)
-    au_trench = geompy.MakeTranslation(au_trench , -(trench_x+20)/2 , 0 , 0 )
 
-    au_ridge_trench = geompy.MakeBoxDXDYDZ(30 , base_y, 10 )
-    au_ridge_trench = geompy.MakeTranslation(au_ridge_trench , -15 , 0 , 0)
+    au_trench = geompy.MakeBoxDXDYDZ(trench_x+20 , trench_y + data.bfm , trench_z+20)
+    au_trench = geompy.MakeTranslation(au_trench , -(trench_x+20)/2 ,0 ,0)
+
+    au_ridge_trench = geompy.MakeBoxDXDYDZ(30, base_y, 10 )
+    au_ridge_trench = geompy.MakeTranslation(au_ridge_trench, -15 ,0 ,0)
 
     au_z = data.au_cap
     au_ar_cap = geompy.MakeBoxDXDYDZ(n_active*base_x, base_y, au_z)
@@ -116,7 +140,7 @@ def creat_au_caps(data, geompy, part_array):
 def create_device ( data, geompy, back_facet_trench = False, middle_y = True, extra_width = True):
     #this will create the a single chip with a submount. The ridge is created within this function
 
-    ridge = create_ridges(data , geompy, middle_y = middle_y)
+    ridge, e_stop = create_ridges(data , geompy, middle_y = middle_y)
 
     partition_array = []
 
@@ -159,9 +183,9 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         
 
     for i in range( 0 , n_active): #insert all the active regions into the chip
-        x_pos = base_x * ( i + 0.5)
+        x_pos = base_x * ( i + 0.5) 
         ridge_cut = geompy.MakeTranslation(ridge , x_pos , 0 , z_pos)
-        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , z_pos + np.sum(data.r_heights[:3]))
+        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 , base_z - e_stop)
         base = geompy.MakeCut(base , ridge_cut , True)
         base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
