@@ -46,6 +46,8 @@ class MySemiconductor:
         self.insul_mat = int(input_dat[1,1])
         self.insul_z = float(input_dat[1,1])
 
+        self.pside_down = int(input_dat[1,1])
+
 def write_header(proj_name,file):
     header = f'Header\n  CHECK KEYWORDS Warn\n  Mesh DB "{proj_name}" "dummy"\n  Include Path ""\n  Results Directory ""\nEnd\n\n'
     file.write(header)
@@ -127,9 +129,14 @@ def write_bodies( device,file):
         body_string = body_string + write_ind_body(num +1 , device.device_mat , 0) + f'\n' #chip base
         num +=2
         if device.ext_sink_mat !=0:
-            body_string = body_string + write_ind_body(num, device.ext_sink_mat , 0) + '\n'#chip submount
-            #body_string = body_string + write_ind_body(num+1, 9 , 0) + '\n'#chip submount
-            num +=2
+            if device.pside_down ==0:
+                body_string = body_string + write_ind_body(num, device.ext_sink_mat , 0) + '\n'#chip submount
+                #body_string = body_string + write_ind_body(num+1, 9 , 0) + '\n'#chip submount
+                num +=2
+            elif device.pside_down ==1:
+                body_string = body_string + write_ind_body(num, device.ext_sink_mat , 0) + '\n'#chip submount
+                body_string = body_string + write_ind_body(num+1, device.ext_sink_mat , 0) + '\n'#chip submount
+
         if t_count ==1:
                 body_string = body_string + write_ind_body(num + 1 + t_count, device.thermistor_mat , 0) + '\n'#thermistor on submount
         

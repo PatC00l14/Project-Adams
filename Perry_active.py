@@ -34,7 +34,7 @@ def perry_active(project_name, v0, v1, delv, sweeping_V):
             os.system(f'elmersolver > {project_name}/convergence_log.log 2>&1')
     
             #copying and saving of design, results and logs to relative folders
-            shutil.copy(f"{project_name}/temp_save.unv" , f"../../../Projects/Projects/{project_name}/UNV/{V}.unv")
+            shutil.move(f"{project_name}/temp_save.unv" , f"../../../Projects/Projects/{project_name}/UNV/{V}.unv")
             shutil.copy(f"{project_name}/convergence_log.log" , f"../../../Projects/Projects/{project_name}/Logs/{V}.log")
             while True:
                 try:
