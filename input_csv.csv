@@ -1,6 +1,6 @@
-﻿Device ,,,,Laser / ridge structure,,,,,,,Mesh linear length (um),,,Submount dimensions,,Metal Stack,,BFM,Thermistor,,Trench,Cartidge,,No of chips,Insulating layer,,P-side down
-No. of ridges,Ridges ON,"Device x,y,z (um)",Material,No of Layers,Height (um),Widths (um),Length (um),Material,Heat Power (W),Heat sink temp (C ),Body ,Ridge,Ridge Height (um),"X , Y , Z (um)",Material,Thickness (um),Material,Length (um),Dimension,Material,"Trench (x,y,z)",Material,Dimensions(mm),,Material,Thickness(um),1
-2,1,125,11,5,1.5,10,750,11,0,25,40,8,-0.19,1000,7,1.5,2,325,10000,0,10,0,180,3,,,
+﻿Device ,,,,Laser / ridge structure,,,,,,,Mesh linear length (um),,,Submount dimensions,,Metal Stack,,BFM,Thermistor,,Trench,Cartidge,,No of chips,Insulating layer,,
+No. of ridges,Ridges ON,"Device x,y,z (um)",Material,No of Layers,Height (um),Widths (um),Length (um),Material,Heat Power (W),Heat sink temp (C ),Body ,Ridge,Ridge Height (um),"X , Y , Z (um)",Material,Thickness (um),Material,Length (um),Dimension,Material,"Trench (x,y,z)",Material,Dimensions(mm),,Material,Thickness(um),P-side down
+2,1,125,11,5,1.5,10,750,11,0,25,50,40,-0.19,1000,7,1.5,2,325,10000,0,10,0,180,3,3,0.1,1
 ,1,750,,,1.5,10,750,11,0,,,,,2000,,,,,10000,,2000,,15,,,,
 ,,200,,,0.5,10,750,10,0.3036,,,,,600,,,,,400,,10,,12,,,,
 ,,,,,1.1,2.2,750,11,0.1012,,,,,,,,,,,,,,,,,,

@@ -43,10 +43,10 @@ class MySemiconductor:
         self.cartridge_dim = input_dat[1:4,23].astype(float)
         self.n_chips = int(input_dat[1, 24])
 
-        self.insul_mat = int(input_dat[1,1])
-        self.insul_z = float(input_dat[1,1])
+        self.insul_mat = int(input_dat[1,25])
+        self.insul_z = float(input_dat[1,26])
 
-        self.pside_down = int(input_dat[1,1])
+        self.pside_down = int(input_dat[1,27])
 
 def write_header(proj_name,file):
     header = f'Header\n  CHECK KEYWORDS Warn\n  Mesh DB "{proj_name}" "dummy"\n  Include Path ""\n  Results Directory ""\nEnd\n\n'
