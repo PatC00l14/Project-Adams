@@ -4,7 +4,7 @@ import shutil
 import os 
 import numpy as np
 from global_write import global_writeX
-from origin_write import MySemiconductor
+from origin_write import MySemiconductor, global_write1, global_write2
 #import device data using MySemiconductor class - to be called from other programs
 
 def perry_active(project_name, v0, v1, delv, sweeping_V):
@@ -22,12 +22,11 @@ def perry_active(project_name, v0, v1, delv, sweeping_V):
         for V in variable:
             #Clear and write bulk of case.sif
             os.chdir('C:/Projects/Perry_run')
-            global_writeX(project_name, sweeping_V, V)
+            #global_writeX(project_name, sweeping_V, V)
     
             #get ready to run salome
             os.chdir('../..')
             os.system(f"SALOME-9.12.0\W64\Python\python3.exe SALOME-9.12.0\salome -t Perry_Salome_nemo.py args:{project_name},{V},{sweeping_V}")
-    
             #get ready for elmer
             os.chdir(f"C:/ElmerFEm/ElmerFEM/bin")
             os.system(f'elmergrid 8 2 {project_name}/temp_save.unv -autoclean -relh 0.1 -out {project_name}/dummy')

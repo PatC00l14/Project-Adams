@@ -57,5 +57,6 @@ def copy_scripts(proj_name, sweep_ind):
     #shutil.copy(f'C:/Projects/Perry_run/XPythonPostProcessing.py' ,  f'C:/Projects/Projects/{proj_name}/XPythonPostProcessing.py')
     shutil.copy(f'C:/Projects/Perry_run/Perry_Paraview_nemo.py' , f'C:/Paraview/Paraview/bin/Perry_Paraview_nemo.py')
     shutil.copy(f'C:/Projects/Perry_run/Perry_Salome_nemo.py' , 'C:/SALOME-9.12.0/W64/Python/Perry_Salome_nemo.py')
+    shutil.copy(f'C:/Projects/Perry_run/origin_write.py' , 'C:/SALOME-9.12.0/W64/Python/origin_write.py')
     os.system(f'echo > C:/ElmerFEM/ElmerFEM/bin/{proj_name}/case.sif')
     return()

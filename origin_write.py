@@ -67,6 +67,19 @@ def write_ind_body(ind , material , body_force): # write an individual body forc
         bdy_string00 = f'Body {ind} \n  Target Bodies(1) = {ind}  \n  Name = "Body Property {ind}" \n  Equation = 1 \n  Material = {material} \n  Body Force = {body_force} \n  Initial condition = 1 \nEnd \n'
     return (bdy_string00)
 
+def write_ind_bodyx(ind , material , body_force, project_name): # write an individual body force term
+    #if body force is zero then remove body force from sif text
+    #material and body_force are integers which indicate the index of the material and forces later described in the .sif file. 
+
+    if body_force ==0:
+        bdy_string00 = f'Body {ind} \n  Target Bodies(1) = {ind}  \n  Name = "Body Property {ind}" \n  Equation = 1 \n  Material = {material} \n  Initial condition = 1 \nEnd \n'
+    else:
+        bdy_string00 = f'Body {ind} \n  Target Bodies(1) = {ind}  \n  Name = "Body Property {ind}" \n  Equation = 1 \n  Material = {material} \n  Body Force = {body_force} \n  Initial condition = 1 \nEnd \n'
+    my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/casex.sif' , 'a')
+    my_file.write(bdy_string00)
+    my_file.close()
+    return (bdy_string00)
+
 def write_bodies( device,file): 
     body_string = '\n'
 
@@ -143,6 +156,28 @@ def write_bodies( device,file):
     file.write(f'{body_string}')
     return()
 
+def write_ridge_bodiesx( device, project_name): 
+    body_string = '\n'
+
+    n_r = device.n_ridges #number of ridges per chip
+    n_l = device.n_layers #number of layers per ridge
+
+    for r in range(0, n_r): #ridge index
+        count = 1
+        for l in range(1,n_l+1): #layer index
+            num = r*(n_l) + l
+            if device.r_heat_power[l-1] *device.r_onoff[r] !=0: #this means there IS heating in this layer
+                body_string = body_string + write_ind_body(num, device.r_materials[l-1] ,count) + f'\n'
+                count += 1
+            else:
+                body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + f'\n'
+    num = (n_r*n_l) + 1
+
+    file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/casex.sif' , 'a')
+    file.write(f'{body_string}')
+    file.close()
+    return()
+
 
 def write_solver(file): #write the solver section - requires not specific input. Parameters here can be altered for more advanced simulations
     #solver = ' \n Solver 1 \n  Equation = Navier-Stokes\n  Procedure = "FlowSolve" "FlowSolver"\n  Variable = Flow Solution[Velocity:3 Pressure:1]\n  Exec Solver = Always \n  Stabilize = True \n  Optimize Bandwidth = True \n  Steady State Convergence Tolerance = 1.0e-5 \n  Nonlinear System Convergence Tolerance = 1.0e-7 \n  Nonlinear System Max Iterations = 20 \n  Nonlinear System Newton After Iterations = 3 \n  Nonlinear System Newton After Tolerance = 1.0e-3 \n  Nonlinear System Relaxation Factor = 1 \n  Linear System Solver = Iterative \n  Linear System Iterative Method = BiCGStab \n  Linear System Max Iterations = 500 \n  Linear System Convergence Tolerance = 1.0e-10 \n  BiCGstabl polynomial degree = 2 \n  Linear System Preconditioning = ILU0 \n  Linear System ILUT Tolerance = 1.0e-3 \n  Linear System Abort Not Converged = False \n  Linear System Residual Output = 10 \n  Linear System Precondition Recompute = 1 \n End \n Solver 2\n  Equation = Heat Equation\n  Variable = Temperature\n  Procedure = "HeatSolve" "HeatSolver"\n  Exec Solver = Always\n  Stabilize = True\n  Optimize Bandwidth = True\n  Steady State Convergence Tolerance = 1.0e-5\n  Nonlinear System Convergence Tolerance = 1.0e-7\n  Nonlinear System Max Iterations = 20\n  Nonlinear System Newton After Iterations = 3\n  Nonlinear System Newton After Tolerance = 1.0e-3\n  Nonlinear System Relaxation Factor = 1\n  Linear System Solver = Iterative\n  Linear System Iterative Method = BiCGStab\n  Linear System Max Iterations = 500\n  Linear System Convergence Tolerance = 1.0e-10\n  BiCGstabl polynomial degree = 2\n  Linear System Preconditioning = ILU0\n  Linear System ILUT Tolerance = 1.0e-3\n  Linear System Abort Not Converged = False\n  Linear System Residual Output = 10\n  Linear System Precondition Recompute = 1\nEnd'
@@ -204,9 +239,31 @@ def write_ESSI(proj_name):#ELMERSOLVER_STARTINFO write
 def global_write(project_name , device):
     my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'w')
     write_header(project_name, my_file) #header needs project name
-    my_file.close() ; my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'a')
+    my_file.close()
+    my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'a')
     write_simconst(my_file)
     write_bodies(device , my_file)# requires the number of ridges - layers - materials
+    write_solver(my_file)
+    write_equation(my_file)
+    write_materials(my_file)
+    write_body_forces(device,my_file) #needs heat power for each ridge
+    write_initial_conds(my_file , T_init = device.T_sink+10)#can take in the a different initial temp if that is of interest
+    #write_boundary_conds -DO NOT EXECUTE HERE, needs Salome input so execute direclty from Salome script
+    write_ESSI(project_name)
+    my_file.close()
+    return()
+
+def global_write1(project_name , device):
+    my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'w')
+    write_header(project_name, my_file) #header needs project name
+    my_file.close()
+    my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'a')
+    write_simconst(my_file)
+    my_file.close()
+    return()
+
+def global_write2(project_name , device):
+    my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'a')
     write_solver(my_file)
     write_equation(my_file)
     write_materials(my_file)

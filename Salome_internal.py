@@ -161,10 +161,45 @@ def create_insulating_layer(data, geompy, device, device0, e_stop):
     
     return(insul_layer, au_layer)
 
-def create_wirebonds(data, geompy):
 
-    wire_bond = geompy.MakeBoxDXDYDZ(1,1,1)
-    return()
+def creat_au_caps(data, geompy, part_array):
+
+    n_active = data.n_ridges
+
+    [base_x , base_y , base_z] = data.device_dim
+    [trench_x, trench_y , trench_z] = data.trench_dim
+
+
+    au_trench = geompy.MakeBoxDXDYDZ(trench_x+20 , trench_y + data.bfm , trench_z+20)
+    au_trench = geompy.MakeTranslation(au_trench , -(trench_x+20)/2 ,0 ,0)
+
+    au_ridge_trench = geompy.MakeBoxDXDYDZ(30, base_y, 10 )
+    au_ridge_trench = geompy.MakeTranslation(au_ridge_trench, -15 ,0 ,0)
+
+    au_z = data.au_cap
+    au_ar_cap = geompy.MakeBoxDXDYDZ(n_active*base_x, base_y, au_z)
+    au_ar_cap = geompy.MakeTranslation(au_ar_cap, 0 , 0 , base_z)
+    au_bfm_cap = geompy.MakeBoxDXDYDZ(n_active*base_x, data.bfm - 15, au_z)
+    au_bfm_cap = geompy.MakeTranslation(au_bfm_cap, 0 , base_y + 15, base_z)
+
+    z_pos = base_z  - np.sum(data.r_heights)
+
+    for i in range(n_active):
+            x_pos = base_x * ( i + 0.5)
+            au_ridge_trench_cut = geompy.MakeTranslation(au_ridge_trench,x_pos , 0 , z_pos+0.5)
+            au_ar_cap = geompy.MakeCut(au_ar_cap, au_ridge_trench_cut)
+
+    for i in range(n_active+1):
+        x_pos = base_x * i
+        au_trench_cut = geompy.MakeTranslation(au_trench,x_pos , 0 , base_z - trench_z )
+        au_ar_cap = geompy.MakeCut(au_ar_cap, au_trench_cut)
+        au_bfm_cap = geompy.MakeCut(au_bfm_cap, au_trench_cut)
+
+    part_array = np.append(part_array, au_ar_cap)
+    part_array = np.append(part_array, au_bfm_cap)
+
+    return(part_array)
+
 
 def find_estop(data):
     ##quick method to find the estop height to determine the ridge trench depth
@@ -200,6 +235,8 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     ridge_trench = geompy.MakeBoxDXDYDZ(22 , base_y, e_stop)
     ridge_trench = geompy.MakeTranslation(ridge_trench , -11 , 0 , 0)
 
+    au_ridge_trench = geompy.MakeBoxDXDYDZ(30 , base_y, 10 )
+    au_ridge_trench = geompy.MakeTranslation(au_ridge_trench , -15 , 0 , 0)
     
     if extra_width:
         extra_width = 1
@@ -207,11 +244,24 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         extra_width = 0
     
 
+
+
+
     base = geompy.MakeBoxDXDYDZ(base_x * (n_active + extra_width) , base_y + data.bfm, base_z)
     base = geompy.MakeTranslation(base , (-base_x / 2) * extra_width , 0 , 0 )
 
     base_0 = geompy.MakeBoxDXDYDZ(base_x * (n_active + extra_width) , base_y + data.bfm, base_z - 30)
-    base_0 = geompy.MakeTranslation(base_0, (-base_x / 2) * extra_width , 0 , 0 )    
+    base_0 = geompy.MakeTranslation(base_0, (-base_x / 2) * extra_width , 0 , 0 )
+    
+    if data.au_cap !=0:
+        au_z = data.au_cap
+        au_ar_cap = geompy.MakeBoxDXDYDZ(n_active*base_x, base_y, au_z)
+        au_ar_cap = geompy.MakeTranslation(au_ar_cap, 0 , 0 , base_z)
+        au_bfm_cap = geompy.MakeBoxDXDYDZ(n_active*base_x, data.bfm - 15, au_z)
+        au_bfm_cap = geompy.MakeTranslation(au_bfm_cap, 0 , base_y + 15, base_z)
+        #replace the above soon with the below
+
+        
         
 
     for i in range( 0 , n_active): #insert all the active regions into the chip
@@ -222,7 +272,9 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
         partition_array2 = np.append(partition_array2, ridge_cut)
-
+        if data.au_cap !=0:
+            au_ridge_trench_cut = geompy.MakeTranslation(au_ridge_trench,x_pos , 0 , z_pos+0.5)
+            au_ar_cap = geompy.MakeCut(au_ar_cap, au_ridge_trench_cut)
     
     #write the body details of the case.sif file for the ridges
     write_ridge_bodies(data, pro_name)
@@ -237,6 +289,9 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         base = geompy.MakeCut(base , trench_cut , True)
         if data.au_cap!=0:
             au_trench_cut = geompy.MakeTranslation(au_trench,x_pos , 0 , base_z - trench_z )
+            au_ar_cap = geompy.MakeCut(au_ar_cap, au_trench_cut)
+            au_bfm_cap = geompy.MakeCut(au_bfm_cap, au_trench_cut)
+
             insul_layer = geompy.MakeCut(insul_layer, au_trench_cut)
             au_layer = geompy.MakeCut(au_layer, au_trench_cut)
     
@@ -246,12 +301,15 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         back_facet_trench = geompy.MakeTranslation(back_trench, 0, base_y , base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
         if data.au_cap !=0:
+            au_bfm_cap = geompy.MakeCut(au_bfm_cap, back_facet_trench)
             au_layer = geompy.MakeCut(au_layer, back_facet_trench)
             insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
+
         back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , 20 , trench_z+10)
         back_facet_trench = geompy.MakeTranslation(back_trench, -base_x/2 , base_y + data.bfm -20, base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
         if data.au_cap !=0:
+            au_bfm_cap = geompy.MakeCut(au_bfm_cap, back_facet_trench)
             au_layer = geompy.MakeCut(au_layer, back_facet_trench)
             insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
 
@@ -307,6 +365,7 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
 
     final_partition = geompy.MakePartition(partition_array.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
     #final_partition = geompy.MakePartition(partition_array2.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
+    #I have no idea why the second one returns the partition in the wrong order
 
     return(final_partition , ridge)
 
@@ -445,7 +504,6 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     OY = geompy.MakeVectorDXDYDZ(0, 1, 0)
     OZ = geompy.MakeVectorDXDYDZ(0, 0, 1)
 
-    #multi_ridge = create_ridges (data , geompy)
     chip, multi_ridge = create_device( data ,  geompy , back_facet_trench=False, middle_y=False, extra_width= True, pro_name=arg0)
 
     if data.cartridge_mat!=0:
@@ -495,9 +553,9 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     netgen = True
 
     if netgen:
-
         if arg0 != 'y':
             Mesh_1 = NETGEN_create_mesh(data, adams_partition, sub_mesh_auto_group, smesh)
+        pass
     else:
         Mesh_1 = create_mesh(data , adams_partition , sub_mesh_auto_group, smesh)
     
@@ -517,12 +575,11 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     print(pd.__file__)
     print('#####################################################')
     return(f_o_g)
-    
 
-arg1 = sys.argv[1] #project name - can also take in more arguments if necessary
+arg1 = 'y' #project name - can also take in more arguments if necessary
 
-V = float(sys.argv[2]) #input variable
-sweeping_V = int(sys.argv[3])
+V = 0 #input variable
+sweeping_V = 0
 
 
 pandas_data = pd.read_csv('C:/Projects/Perry_run/input_csv.csv').to_numpy()
@@ -558,7 +615,4 @@ elif sweeping_V ==0:
 elif sweeping_V == 9:
     device.au_cap = V
 
-global_write1(arg1, device) #write the first part
-f_o_g = new_mesh_ext_sink(device, arg1) #create everything and write the bodies and calculate the face_of_god index
-global_write2(arg1, device)
-write_boundary_conds(f_o_g, arg1, device) #write boundary conditions
+new_mesh_ext_sink(device, arg1)
