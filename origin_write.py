@@ -7,8 +7,6 @@ import_variable = 101
 instance_to_transfer = 14 #:)
 
 
-
-
 class MySemiconductor:
     def __init__(self, input_dat):
         #device
@@ -179,18 +177,26 @@ def write_ridge_bodiesx( device, project_name):
     return()
 
 
-def write_solver(file): #write the solver section - requires not specific input. Parameters here can be altered for more advanced simulations
+def write_solver(file, scc = False): #write the solver section - requires not specific input. Parameters here can be altered for more advanced simulations
     #solver = ' \n Solver 1 \n  Equation = Navier-Stokes\n  Procedure = "FlowSolve" "FlowSolver"\n  Variable = Flow Solution[Velocity:3 Pressure:1]\n  Exec Solver = Always \n  Stabilize = True \n  Optimize Bandwidth = True \n  Steady State Convergence Tolerance = 1.0e-5 \n  Nonlinear System Convergence Tolerance = 1.0e-7 \n  Nonlinear System Max Iterations = 20 \n  Nonlinear System Newton After Iterations = 3 \n  Nonlinear System Newton After Tolerance = 1.0e-3 \n  Nonlinear System Relaxation Factor = 1 \n  Linear System Solver = Iterative \n  Linear System Iterative Method = BiCGStab \n  Linear System Max Iterations = 500 \n  Linear System Convergence Tolerance = 1.0e-10 \n  BiCGstabl polynomial degree = 2 \n  Linear System Preconditioning = ILU0 \n  Linear System ILUT Tolerance = 1.0e-3 \n  Linear System Abort Not Converged = False \n  Linear System Residual Output = 10 \n  Linear System Precondition Recompute = 1 \n End \n Solver 2\n  Equation = Heat Equation\n  Variable = Temperature\n  Procedure = "HeatSolve" "HeatSolver"\n  Exec Solver = Always\n  Stabilize = True\n  Optimize Bandwidth = True\n  Steady State Convergence Tolerance = 1.0e-5\n  Nonlinear System Convergence Tolerance = 1.0e-7\n  Nonlinear System Max Iterations = 20\n  Nonlinear System Newton After Iterations = 3\n  Nonlinear System Newton After Tolerance = 1.0e-3\n  Nonlinear System Relaxation Factor = 1\n  Linear System Solver = Iterative\n  Linear System Iterative Method = BiCGStab\n  Linear System Max Iterations = 500\n  Linear System Convergence Tolerance = 1.0e-10\n  BiCGstabl polynomial degree = 2\n  Linear System Preconditioning = ILU0\n  Linear System ILUT Tolerance = 1.0e-3\n  Linear System Abort Not Converged = False\n  Linear System Residual Output = 10\n  Linear System Precondition Recompute = 1\nEnd'
-    solver1 = open('C:/Projects/Perry_run/case_text/case_solver.txt' , 'r')
+    if not scc:
+        solver1 = open('C:/Projects/Perry_run/case_text/case_solver.txt' , 'r')
+    else: 
+        solver1 = open('C:/Projects/Perry_run/case_text/case_solverSCC.txt' , 'r')
     solver = solver1.read()
     file.write(solver)
     solver1.close()
     return()
 
-def write_equation(file): #write the equation section - simply activates the heat solver within the multiphysics simulations
-    eqn = '\n\nEquation 1\n  Name = "Heat equation"\n  Active Solvers(1) = 1\nEnd\n\n'
+def write_equation(file, scc = False): #write the equation section - simply activates the heat solver within the multiphysics simulations
+    if not scc:
+        eqn = '\n\nEquation 1\n  Name = "Heat equation"\n  Active Solvers(1) = 1\nEnd\n\n'
+    else:
+        eqn = '\n\nEquation 1\n  Name = "Static Current Solver"\n  Active Solvers(1) = 1\nEnd\n\n'
     file.write(eqn)
     return()
+
+
 
 def write_materials(file): #write materials and their properties - this can be edited quite easily and perhaps could be made to include new materials as an input?
     #mats = 'Material 1\n  Name = "XX Indium Phosphide"\n  Heat Conductivity = 68\n  Heat Capacity = 310\n  Density = 4800\n  Electric Conductivity = 10e6\n  Porosity Model = Always saturated\nEnd\n\nMaterial 2\n  Name = "XX Gold"\n  Porosity Model = Always saturated\n  Heat Capacity = 129\n  Heat Conductivity = 318\n  Density = 19300\n  Electric Conductivity = 4.1e7\nEnd\n\nMaterial 3\n  Name = "XX Silicon Nitride"\n  Porosity Model = Always saturated\n  Density = 3230\n  Heat Capacity = 880\n  Electric Conductivity = 10e-14\n  Heat Conductivity = 17.5\nEnd\n\nMaterial 4\n  Name = "XX Titanium"\n  Heat Capacity = 522.4\n  Heat Conductivity = 11.4\n  Electric Conductivity = 2.38e6\n  Porosity Model = Always saturated\n  Density = 4510\nEnd\n\nMaterial 5\n  Name = "XX Platinum"\n  Heat Capacity = 134\n  Heat Conductivity = 69.1\n  Electric Conductivity = 9.43e6\n  Density = 21450\nEnd\n\nMaterial 6\n  Name = "XX AlN"\n  Heat Capacity = 740\n  Density = 2920\n  Porosity Model = Always saturated\n  Heat Conductivity = 237\nEnd\n\nMaterial 7\n  Name = "XX Ta2O5"\n  Heat Capacity = 300\n  Density = 8200\n  Porosity Model = Always saturated\n  Heat Conductivity = 7\nEnd\n\n'

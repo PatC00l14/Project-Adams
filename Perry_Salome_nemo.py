@@ -109,14 +109,14 @@ def write_partition(obj, part_arr, count,  mat, proj_name, bdy = 0, repeat = 1):
         count += 1
     return(part_arr, count)
 
-def create_insulating_layer(data, geompy, device, device0, e_stop):
+def create_insulating_layer(data, geompy, base, base0, e_stop):
      
     [base_x , base_y , base_z] = data.device_dim
     [trench_x, trench_y , trench_z] = data.trench_dim
     n_ridges = data.n_ridges
 
-    h_in = 0.1 #insulation thickness - will be assigned at some point
-    h_au = 0.1 #Gold thickness - can be assigned now but I cba at the minute
+    h_in = data.insul_z #insulation thickness - will be assigned at some point
+    h_au = data.au_cap #Gold thickness - can be assigned now but I cba at the minute
     r_tx = 22 #ridge trench width
     r_wx = np.min(data.r_widths) #width of the ridge
     r_space = 0.5 * (r_tx - r_wx) #width of space from ridge edge to trench edge
@@ -126,15 +126,15 @@ def create_insulating_layer(data, geompy, device, device0, e_stop):
     #                           r_tx            
 
     insul_layer = geompy.MakeBoxDXDYDZ(base_x * (data.n_ridges), base_y+data.bfm, base_z + h_in)
-    insul_layer = geompy.MakeCut(insul_layer, device0)    
-    insul_layer = geompy.MakeCut(insul_layer, device)
+    insul_layer = geompy.MakeCut(insul_layer, base0)    
+    insul_layer = geompy.MakeCut(insul_layer, base)
     
     insul_trench = geompy.MakeBoxDXDYDZ(r_space - 2*h_in, base_y, e_stop)
     insul_trench = geompy.MakeTranslation(insul_trench, - 0.5 * (r_space - 2*h_in), 0, base_z - e_stop + h_in)
 
     au_layer = geompy.MakeBoxDXDYDZ(base_x* (data.n_ridges), base_y+data.bfm, base_z + h_in + h_au)
-    au_layer = geompy.MakeCut(au_layer, device0)
-    au_layer = geompy.MakeCut(au_layer, device)
+    au_layer = geompy.MakeCut(au_layer, base0)
+    au_layer = geompy.MakeCut(au_layer, base)
 
     au_trench = geompy.MakeBoxDXDYDZ(r_space - 2*(h_in+h_au), base_y, e_stop)
     au_trench = geompy.MakeTranslation(au_trench, - 0.5 * (r_space - 2*(h_in+h_au)), 0, base_z - e_stop + h_in + h_au)
@@ -161,10 +161,54 @@ def create_insulating_layer(data, geompy, device, device0, e_stop):
     
     return(insul_layer, au_layer)
 
-def create_wirebonds(data, geompy):
+def create_wirebonds(data, geompy, partition, pro_name, count = 0):
+    
+    wire_bond_partition = []
+    [base_x, base_y, base_z] = data.device_dim
+    if data.au_cap_mat ==0 or data.insul_mat ==0:
+        data.au_cap = 0 ; data.insul_z = 0
+    wire_bond = geompy.MakeBoxDXDYDZ(50,50,50)
 
-    wire_bond = geompy.MakeBoxDXDYDZ(1,1,1)
-    return()
+    for i in range(data.n_ridges):
+        x_pos = (0.25 + i)*base_x - 25
+        wire_bond_set = geompy.MakeTranslation(wire_bond, x_pos, base_y/2, base_z + data.au_cap+data.insul_z)
+        partition = np.append(partition, wire_bond_set)
+    
+    write_partition(wire_bond_set, wire_bond_partition, count, data.au_cap_mat, pro_name, repeat=data.n_ridges)        
+        
+
+    return(partition)
+
+def create_submount(data, geompy):
+
+    [ext_sink_x,ext_sink_y,ext_sink_z] = data.ext_sink_dim
+    n_active = data.n_ridges
+    [base_x, base_y, base_z] = data.device_dim
+
+    
+    if data.pside_down == 0:
+         ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
+         ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-100 , -ext_sink_z)
+         return(ext_sink)
+
+
+    elif data.pside_down == 1:
+        if device.au_cap_mat ==0 or device.insul_mat == 0:
+            ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
+            ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40)
+    
+            ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
+            ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z)
+            
+            
+        else:
+            ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
+            ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40+data.au_cap+data.insul_z)
+    
+            ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
+            ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.data.au_cap+data.insul_z)
+        return(ext_sink1, ext_sink2)
+
 
 def find_estop(data):
     ##quick method to find the estop height to determine the ridge trench depth
@@ -228,14 +272,14 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     write_ridge_bodies(data, pro_name)
     count = n_active * data.n_layers + 1
 
-    if data.au_cap != 0:
+    if data.au_cap_mat != 0 and data.insul_mat !=0:
             insul_layer , au_layer = create_insulating_layer(data, geompy, base, base_0, e_stop)  
 
     for i in range ( 0 , n_active+1): #create trenches halfway between each active region
         x_pos = base_x * i
         trench_cut = geompy.MakeTranslation(trench , x_pos , 0 , base_z - trench_z)
         base = geompy.MakeCut(base , trench_cut , True)
-        if data.au_cap!=0:
+        if data.au_cap_mat!=0:
             au_trench_cut = geompy.MakeTranslation(au_trench,x_pos , 0 , base_z - trench_z )
             insul_layer = geompy.MakeCut(insul_layer, au_trench_cut)
             au_layer = geompy.MakeCut(au_layer, au_trench_cut)
@@ -245,17 +289,17 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 0) , 20 , trench_z+10)
         back_facet_trench = geompy.MakeTranslation(back_trench, 0, base_y , base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
-        if data.au_cap !=0:
+        if data.au_cap_mat !=0 and data.insul_mat !=0:
             au_layer = geompy.MakeCut(au_layer, back_facet_trench)
             insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
         back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , 20 , trench_z+10)
         back_facet_trench = geompy.MakeTranslation(back_trench, -base_x/2 , base_y + data.bfm -20, base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
-        if data.au_cap !=0:
+        if data.au_cap_mat !=0 and data.insul_mat !=0:
             au_layer = geompy.MakeCut(au_layer, back_facet_trench)
             insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
 
-    if data.au_cap!=0:
+    if data.au_cap_mat!=0 and data.insul_mat !=0:
         partition_array2, count = write_partition(partition_array2, au_layer, count, data.au_cap_mat, pro_name, repeat= 2 * n_active)
         partition_array2, count = write_partition(partition_array2, insul_layer, count, data.insul_mat, pro_name, repeat= 3 * n_active)
         partition_array = np.append(partition_array, au_layer)
@@ -270,6 +314,8 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     partition_array = np.append(partition_array, base_0) 
 
     #add submount or external_heatsink
+
+    submount = create_submount(data, geompy)
     
     if device.ext_sink_mat !=0:
        if device.pside_down == 0:
@@ -279,12 +325,20 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
             partition_array2, count = write_partition(partition_array2, ext_sink, count, data.ext_sink_mat, pro_name)
 
        elif device.pside_down == 1:
-           ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
-           ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40+data.au_cap)
-
-           ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
-           ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.au_cap)
-           
+           if device.au_cap_mat ==0 or device.insul_mat == 0:
+               ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
+               ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40)
+    
+               ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
+               ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z)
+               
+           elif device.au_cap + device.insul_z > 0:
+               ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
+               ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40+data.au_cap+data.insul_z)
+    
+               ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
+               ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.data.au_cap+data.insul_z)
+            
            partition_array2, count = write_partition(partition_array2, ext_sink1, count, data.ext_sink_mat, pro_name)
            partition_array2, count = write_partition(partition_array2, ext_sink2, count, data.ext_sink_mat, pro_name)
            partition_array = np.append(partition_array , ext_sink1)
@@ -332,6 +386,24 @@ def create_chuck(sc_data , geompy): #create the chuck with walls to hold the car
     chuck = geompy.MakePartition(chuck_array.tolist(), [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
 
     return(chuck)
+
+def cartridge_shit(data, geompy, chip, dump):
+    dump +=1
+    if data.cartridge_mat!=0:
+        adams_partition = []
+        temp_array =np.array([1,10,20])
+        for i in temp_array:
+            x_pos = (61 + 8.9*(i-1/2))*1000
+            z_pos = (20+12)*1000 + data.ext_sink_dim[2] + 50
+            chip1 = geompy.MakeTranslation(chip, x_pos , 2.1*1000, z_pos )
+            adams_partition = np.append(adams_partition , chip1)
+        cartridge = create_cartridge(data, geompy)
+        cartridge = geompy.MakeTranslation(cartridge, (300 - 180)*1000/2, 2*1000, 20*1000)
+        adams_partition = np.append(adams_partition , cartridge)
+        chuck = create_chuck(data, geompy)
+        adams_partition = np.append(adams_partition , chuck)
+        adams_partition = geompy.MakePartition(adams_partition.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
+    return()
     
 
 def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
@@ -361,13 +433,15 @@ def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
     return(Mesh_1)
 
 def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
+
+
     bdy_dim = sc_data.bdy_mesh ; r_dim = sc_data.r_mesh
     #ridge mesh properties 
     Mesh_1 = smesh.Mesh(fin_partition,'Mesh_1')
     NETGEN_1D_2D_3D = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
     NETGEN_3D_Parameters_1 = NETGEN_1D_2D_3D.Parameters()
     NETGEN_3D_Parameters_1.SetMaxSize( r_dim )
-    NETGEN_3D_Parameters_1.SetMinSize( 0.8)
+    NETGEN_3D_Parameters_1.SetMinSize( 0.2)
     NETGEN_3D_Parameters_1.SetSecondOrder( 0 )
     NETGEN_3D_Parameters_1.SetOptimize( 1 )
     NETGEN_3D_Parameters_1.SetFineness( 4 )
@@ -382,7 +456,7 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
     NETGEN_1D_2D_3D_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sub_mesh_group)
     NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
     NETGEN_3D_Parameters_2.SetMaxSize( bdy_dim )
-    NETGEN_3D_Parameters_2.SetMinSize( 15)
+    NETGEN_3D_Parameters_2.SetMinSize( 10)
     NETGEN_3D_Parameters_2.SetSecondOrder( 0 )
     NETGEN_3D_Parameters_2.SetOptimize( 1 )
     NETGEN_3D_Parameters_2.SetFineness( 3)
@@ -397,12 +471,12 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
     return(Mesh_1)
 
 
-def find_face_of_god(smesh , group_array, data):
+def find_face_of_god(smesh , group_array, data, scc  = False):
     
     #find the index of the face for the sink 
     #this is required as there is not consistency for the numbering of each face with respect to creation order
     temp_z = 1
-    f_o_g2 = 0
+    temp_pz = 1
 
     if data.pside_down == 0:
         for i  in range(0 , len(group_array)):
@@ -411,9 +485,10 @@ def find_face_of_god(smesh , group_array, data):
                     if BBox.minZ < temp_z:
                         temp_z = BBox.minZ
                         f_o_g = i + 1
-    
-                    if data.cartridge_mat == 0 and BBox.minZ == 0:
-                        f_o_g2 = i+1
+                    if BBox.maxZ > temp_pz and scc:
+                        temp_pz = BBox.MaxZ
+                        f_o_scc = i + 1
+        return(int(f_o_g))
     elif data.pside_down ==1:
         for i  in range(0 , len(group_array)):
                 BBox = smesh.GetBoundingBox(group_array[i])
@@ -421,11 +496,10 @@ def find_face_of_god(smesh , group_array, data):
                     if BBox.maxZ > temp_z:
                         temp_z = BBox.maxZ
                         f_o_g = i + 1
-    
-                    if data.cartridge_mat == 0 and BBox.minZ == 0:
-                        f_o_g2 = i+1
-
-    return(int(f_o_g), int(f_o_g2))
+                    if BBox.maxZ > temp_pz and scc:
+                        temp_pz = BBox.MaxZ
+                        f_o_scc = i + 1
+        return(int(f_o_g))
 
 def create_solid_array(Mesh_1 , partition_exploded):
 
@@ -446,38 +520,19 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     OZ = geompy.MakeVectorDXDYDZ(0, 0, 1)
 
     #multi_ridge = create_ridges (data , geompy)
-    chip, multi_ridge = create_device( data ,  geompy , back_facet_trench=False, middle_y=False, extra_width= True, pro_name=arg0)
-
-    if data.cartridge_mat!=0:
-        adams_partition = []
-        temp_array =np.array([1,10,20])
-        for i in temp_array:
-            x_pos = (61 + 8.9*(i-1/2))*1000
-            z_pos = (20+12)*1000 + data.ext_sink_dim[2] + 50
-            chip1 = geompy.MakeTranslation(chip, x_pos , 2.1*1000, z_pos )
-            adams_partition = np.append(adams_partition , chip1)
-        cartridge = create_cartridge(data, geompy)
-        cartridge = geompy.MakeTranslation(cartridge, (300 - 180)*1000/2, 2*1000, 20*1000)
-        adams_partition = np.append(adams_partition , cartridge)
-        chuck = create_chuck(data, geompy)
-        adams_partition = np.append(adams_partition , chuck)
-        adams_partition = geompy.MakePartition(adams_partition.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
-    else:
-        adams_partition = chip
+    adams_partition, multi_ridge = create_device( data ,  geompy , back_facet_trench=False, middle_y=False, extra_width= True, pro_name=arg0)
 
     partition_exploded = geompy.ExtractShapes(adams_partition, geompy.ShapeType["SOLID"], False) #exploded the object into a large array
     sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
+    sub_mesh_group_3 = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
 
-    if data.cartridge_mat!=0:
-        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-4:]) #reverse order goes: Sink, base , ridges - chronological order
-    else:
-        if data.thermistor_mat!=0: #thermistor present
-            geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:]) #reverse order goes: thermisotr, Sink, base , ridges - chronological order
-        else:
-            if data.pside_down ==0:
-                geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
-            elif data.pside_down ==1:
-                geompy.UnionList(sub_mesh_auto_group, partition_exploded[-3:-1])
+    #geompy.UnionList(sub_mesh_group_3, )
+
+
+    if data.pside_down ==0:
+        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
+    elif data.pside_down ==1:
+        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-3:-1])
 
 
     geompy.addToStudy( O, 'O' )
@@ -485,17 +540,16 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     geompy.addToStudy( OY, 'OY' )
     geompy.addToStudy( OZ, 'OZ' )
     geompy.addToStudy( multi_ridge, 'multi ridge' )
-    geompy.addToStudy(chip , 'final partition')
+    geompy.addToStudy(adams_partition , 'final partition')
 
     for i in range( 0 , len(partition_exploded)):
-        geompy.addToStudyInFather( chip, partition_exploded[i], f'Solid_{i}' )
+        geompy.addToStudyInFather( adams_partition, partition_exploded[i], f'Solid_{i}' )
     
     smesh = smeshBuilder.New()
 
     netgen = True
 
     if netgen:
-
         if arg0 != 'y':
             Mesh_1 = NETGEN_create_mesh(data, adams_partition, sub_mesh_auto_group, smesh)
     else:
@@ -503,20 +557,18 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     
     solid_array , group_array = create_solid_array(Mesh_1 , partition_exploded)
 
-    f_o_g, f_o_g2 = find_face_of_god(smesh , group_array, data) 
+    fog_fog = find_face_of_god(smesh , group_array, data) 
 
     try:
       Mesh_1.ExportUNV( f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/temp_save.unv', 0 )
       pass
     except:
       print('ExportUNV() failed. Invalid file name?')
-    
-    write_boundary_conds(f_o_g, arg0, data) #can add convection boundaries if interested
 
     print('#####################################################')
     print(pd.__file__)
     print('#####################################################')
-    return(f_o_g)
+    return(fog_fog)
     
 
 arg1 = sys.argv[1] #project name - can also take in more arguments if necessary
@@ -559,6 +611,6 @@ elif sweeping_V == 9:
     device.au_cap = V
 
 global_write1(arg1, device) #write the first part
-f_o_g = new_mesh_ext_sink(device, arg1) #create everything and write the bodies and calculate the face_of_god index
+face_of_god = new_mesh_ext_sink(device, arg1) #create everything and write the bodies and calculate the face_of_god index
 global_write2(arg1, device)
-write_boundary_conds(f_o_g, arg1, device) #write boundary conditions
+write_boundary_conds(face_of_god, arg1, device) #write boundary conditions
