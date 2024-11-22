@@ -163,21 +163,21 @@ def create_insulating_layer(data, geompy, base, base0, e_stop):
 
 def create_wirebonds(data, geompy, partition, pro_name, count = 0):
     
-    wire_bond_partition = []
+    wire_bond_partition = np.array([])
     [base_x, base_y, base_z] = data.device_dim
     if data.au_cap_mat ==0 or data.insul_mat ==0:
-        data.au_cap = 0 ; data.insul_z = 0
-    wire_bond = geompy.MakeBoxDXDYDZ(50,50,50)
-
-    for i in range(data.n_ridges):
-        x_pos = (0.25 + i)*base_x - 25
-        wire_bond_set = geompy.MakeTranslation(wire_bond, x_pos, base_y/2, base_z + data.au_cap+data.insul_z)
-        partition = np.append(partition, wire_bond_set)
+        return(0)
+    else:
+        wire_bond = geompy.MakeBoxDXDYDZ(50,50,50)
     
-    write_partition(wire_bond_set, wire_bond_partition, count, data.au_cap_mat, pro_name, repeat=data.n_ridges)        
+        for i in range(data.n_ridges):
+            x_pos = (0.25 + i)*base_x - 25
+            wire_bond_set = geompy.MakeTranslation(wire_bond, x_pos, base_y/2, base_z + data.au_cap+data.insul_z)
+            partition = np.append(partition, wire_bond_set)
         
-
-    return(partition)
+        parition, count = write_partition(wire_bond_set, wire_bond_partition, count, data.au_cap_mat, pro_name, repeat=data.n_ridges)          
+    
+        return(partition, count)
 
 def create_submount(data, geompy):
 
@@ -266,6 +266,8 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         partition_array = np.append(partition_array, ridge_cut)
         partition_array2 = np.append(partition_array2, ridge_cut)
 
+
+    
     
     #write the body details of the case.sif file for the ridges
     write_ridge_bodies(data, pro_name)
@@ -304,68 +306,30 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         partition_array = np.append(partition_array, au_layer)
         partition_array = np.append(partition_array, insul_layer)
     
+    WB_bool = True
+    if WB_bool:
+        partition_array, count = create_wirebonds(data, geompy, partition_array, pro_name, count = count)
     
-
     base = geompy.MakeCut(base, base_0) #separate upper and main part of the chip as a viscous layer
     partition_array2, count = write_partition(partition_array2, base, count, data.device_mat, pro_name)
     partition_array2, count = write_partition(partition_array2, base_0, count, data.device_mat, pro_name)
     partition_array = np.append(partition_array, base)
     partition_array = np.append(partition_array, base_0) 
 
-    #add submount or external_heatsink
-
-    
-
-    new_method = True
-
-    
+    #add submount or external_heatsink   
     if device.ext_sink_mat !=0:
+       
        if device.pside_down == 0:
-
-            ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
-            ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-100 , -ext_sink_z)
-
             submount = create_submount(data, geompy)
+            partition_array = np.append(partition_array, submount)
+            partition_array2, count = write_partition(partition_array2, submount, count, data.ext_sink_mat, pro_name)
 
-            if new_method:
-                partition_array = np.append(partition_array, submount)
-                partition_array2, count = write_partition(partition_array2, submount, count, data.ext_sink_mat, pro_name)
-            else:
-                partition_array = np.append(partition_array , ext_sink)
-                partition_array2, count = write_partition(partition_array2, ext_sink, count, data.ext_sink_mat, pro_name)
-            
-
-       elif device.pside_down == 1:
+       elif device.pside_down == 1: #need a mesh buffer layer if directly connected to the submount for meshing purposes
            submount1 , submount2 = create_submount(data, geompy)
-           if device.au_cap_mat ==0 or device.insul_mat == 0:
-               ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
-               ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40)
-    
-               ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
-               ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z)
-               
-           elif device.au_cap + device.insul_z > 0:
-               ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
-               ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40+data.au_cap+data.insul_z)
-    
-               ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
-               ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.au_cap+data.insul_z)
-           if new_method:
-    
-               partition_array2, count = write_partition(partition_array2, submount1, count, data.ext_sink_mat, pro_name)
-               partition_array2, count = write_partition(partition_array2, submount2, count, data.ext_sink_mat, pro_name)
-               partition_array = np.append(partition_array , submount1)
-               partition_array = np.append(partition_array , submount2)
-               
-           else:
-               partition_array2, count = write_partition(partition_array2, ext_sink1, count, data.ext_sink_mat, pro_name)
-               partition_array2, count = write_partition(partition_array2, ext_sink2, count, data.ext_sink_mat, pro_name)
-               partition_array = np.append(partition_array , ext_sink1)
-               partition_array = np.append(partition_array , ext_sink2)
-
-
-           
-        
+           partition_array2, count = write_partition(partition_array2, submount1, count, data.ext_sink_mat, pro_name)
+           partition_array2, count = write_partition(partition_array2, submount2, count, data.ext_sink_mat, pro_name)
+           partition_array = np.append(partition_array , submount1)
+           partition_array = np.append(partition_array , submount2)
 
     #need to add a therml paste layer if there is a chuck/ cartride. Set thickness of 50um sitting directly underneath the submount
     if data.cartridge_mat !=0:
@@ -426,32 +390,63 @@ def cartridge_shit(data, geompy, chip, dump):
     return()
     
 
-def create_submesh_group(geompy, fin_partition, explode_partiton, inds):
-    objs = []
+def get_wirebond_index(sc_data):
 
+    #I-A-I-I-A
+    # au - [6,9] ; ins - [5,7,8] --n = 1
+
+    # au - [n*5+1,n*5+4] ; ins - [n*5,n*5+2,N*5+3]  -- n = n
+    au_inds = [1,4] ; insul_inds = [0,2,3]
+    n_active = sc_data.n_ridges
+    if  n_active > 1:
+        for i in range(1,n_active):
+            n = 5*i
+            extendAU = [n+1, n+4] ; extendINS = [n, n+2, n+3]
+            au_inds.extend(extendAU) ; insul_inds.extend(extendINS)
+
+    return(au_inds, insul_inds)
+
+def create_submesh_group(geompy, fin_partition, explode_partiton, inds):
+    #primes the necessary bodies into an 'auto_group' for
+    #precise obect parameters/ submesh
+    objs = [] 
     for i in inds:
         objs.append(explode_partiton[i])
-
-    #sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"]) ##old code
-    #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
-
     sub_mesh_auto_group = geompy.CreateGroup(fin_partition,geompy.ShapeType["SOLID"] )
     geompy.UnionList(sub_mesh_auto_group, objs)
     return(sub_mesh_auto_group)
 
     
 
-def NETGEN_submesh(sc_data, mesh_11, sm_autgroup):
+def NETGEN_submesh(sc_data, mesh_11, sm_autgroup, sink = False):
     ##define algo for 1D,2D
-    NETGEN_1D_2D = mesh_11.Triangle(algo=smeshBuilder.NETGEN_1D2D,geom=sm_autgroup)
-    NETGEN_2D_Simple_Parameters_1 = NETGEN_1D_2D.Parameters(smeshBuilder.SIMPLE)
-    #define algo for 3D
-    NETGEN_3D_1 = mesh_11.Tetrahedron(geom=sm_autgroup)
-    NETGEN_2D_Simple_Parameters_1.SetNumberOfSegments( 15 )
-    NETGEN_2D_Simple_Parameters_1.SetMaxElementArea( 1 )
-    NETGEN_2D_Simple_Parameters_1.SetAllowQuadrangles( 0 )
+    if sink:
+        NETGEN_1D_2D_3D_1 = mesh_11.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sm_autgroup)
+        sm_object = NETGEN_1D_2D_3D_1.GetSubMesh()
+        NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
+        NETGEN_3D_Parameters_2.SetMaxSize( sc_data.bdy_mesh )
+        NETGEN_3D_Parameters_2.SetMinSize( 10)
+        NETGEN_3D_Parameters_2.SetSecondOrder( 0 )
+        NETGEN_3D_Parameters_2.SetOptimize( 1 )
+        NETGEN_3D_Parameters_2.SetFineness( 3)
+        NETGEN_3D_Parameters_2.SetChordalError( -1 )
+        NETGEN_3D_Parameters_2.SetChordalErrorEnabled( 0 )
+        NETGEN_3D_Parameters_2.SetUseSurfaceCurvature( 1 )
+        NETGEN_3D_Parameters_2.SetFuseEdges( 1 )
+        NETGEN_3D_Parameters_2.SetQuadAllowed( 0 )
+        NETGEN_3D_Parameters_2.SetCheckChartBoundary( 176 )
 
-    return(mesh_11)
+    else:
+        NETGEN_1D_2D = mesh_11.Triangle(algo=smeshBuilder.NETGEN_1D2D,geom=sm_autgroup)
+        sm_object = NETGEN_1D_2D.GetSubMesh()
+        NETGEN_2D_Simple_Parameters_1 = NETGEN_1D_2D.Parameters(smeshBuilder.SIMPLE)
+        #define algo for 3D
+        NETGEN_3D_1 = mesh_11.Tetrahedron(geom=sm_autgroup)
+        NETGEN_2D_Simple_Parameters_1.SetNumberOfSegments( 15 )
+        NETGEN_2D_Simple_Parameters_1.SetMaxElementArea( 1 )
+        NETGEN_2D_Simple_Parameters_1.SetAllowQuadrangles( 0 )
+
+    return(mesh_11, sm_object)
 
 def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
 
@@ -473,10 +468,10 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
     NETGEN_3D_Parameters_1.SetCheckChartBoundary( 176 )
     
     #Body mesh properties 
-    new_method = False
+    new_method = True
 
     if new_method:
-        Mesh_1 = NETGEN_submesh(sc_data, Mesh_1, sub_mesh_group)
+        Mesh_1, sm_object = NETGEN_submesh(sc_data, Mesh_1, sub_mesh_group)
     else:
         NETGEN_1D_2D_3D_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sub_mesh_group)
         NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
@@ -491,16 +486,16 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
         NETGEN_3D_Parameters_2.SetFuseEdges( 1 )
         NETGEN_3D_Parameters_2.SetQuadAllowed( 0 )
         NETGEN_3D_Parameters_2.SetCheckChartBoundary( 176 )
+    
+    #set order or submeshes -  need to create submesh objects - how?
+    #isDone = Main_Mesh.SetMeshOrder( [ [ Au_layer_MESH, Insulation_Layer_MESH, Ridge_MESH, Coarse_body_mesh, Buffer_layer_MESH ] ])
 
     isDone = Mesh_1.Compute()
     return(Mesh_1)
 
 
 
-def NETGEN_prime():
-    return()
-
-def add_to_study(geompy, O_array , mult_ridg, part):
+def add_to_study(geompy, O_array , mult_ridg, part, part_expl):
     O , OX, OY,OZ = O_array
     geompy.addToStudy( O, 'O' )
     geompy.addToStudy( OX, 'OX' )
@@ -508,6 +503,9 @@ def add_to_study(geompy, O_array , mult_ridg, part):
     geompy.addToStudy( OZ, 'OZ' )
     geompy.addToStudy(mult_ridg, 'multi ridge' )
     geompy.addToStudy(part , 'final partition')
+
+    for i in range( 0 , len(part_expl)):
+        geompy.addToStudyInFather( part, part_expl[i], f'Solid_{i}' )
     return()
 
 
@@ -540,6 +538,15 @@ def find_face_of_god(smesh , group_array, data, scc  = False):
                         temp_pz = BBox.MaxZ
                         f_o_scc = i + 1
         return(int(f_o_g))
+    
+def find_wirebonds_of_god(smesh , group_array, data):
+    z_thresh = data.device_dim[2] + 5 
+    SCC_faces = np.array([])
+    for i in range(len(group_array)):
+        BBox = smesh.GetBoundingBox(group_array[i])
+        if BBox.minZ == BBox.maxZ and BBox.minZ > z_thresh:
+            SCC_faces = np.append(SCC_faces, i+1)
+    return(SCC_faces)
 
 def create_solid_array(Mesh_1 , partition_exploded):
 
@@ -566,23 +573,22 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
 
     partition_exploded = geompy.ExtractShapes(adams_partition, geompy.ShapeType["SOLID"], False)#exploded the object into a large array
     
+    
     if data.pside_down ==0:
-        sub_mesh_auto_group = create_submesh_group(geompy, adams_partition, partition_exploded, inds=[-2, -1])
-        AU_layer_SMAG = create_submesh_group(geompy, adams_partition, partition_exploded, inds=[1,2])
-        #sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
-        #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
+        sub_mesh_auto_group = create_submesh_group(geompy, adams_partition, partition_exploded, [-2, -1])
+
+        if data.insul_mat !=0 and data.au_cap_mat !=0:
+            au_ins , insul_inds = get_wirebond_index(data) 
+            au_smag = create_submesh_group(geompy, adams_partition, partition_exploded, au_ins)
+            ins_smag = create_submesh_group(geompy, adams_partition, partition_exploded, insul_inds)
+ 
     elif data.pside_down ==1:
         sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
         geompy.UnionList(sub_mesh_auto_group, partition_exploded[-3:-1])
     
-    add_to_study(geompy, [O,OX,OY,OZ] , multi_ridge, adams_partition)
+    add_to_study(geompy, [O,OX,OY,OZ] , multi_ridge, adams_partition, partition_exploded)
 
-    geompy.addToStudy( O, 'O' )
-    geompy.addToStudy( OX, 'OX' )
-    geompy.addToStudy( OY, 'OY' )
-    geompy.addToStudy( OZ, 'OZ' )
-    geompy.addToStudy(multi_ridge, 'multi ridge' )
-    geompy.addToStudy(adams_partition , 'final partition')
+
 
     for i in range( 0 , len(partition_exploded)):
         geompy.addToStudyInFather( adams_partition, partition_exploded[i], f'Solid_{i}' )
@@ -595,11 +601,8 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
         if arg0 != 'y':
             Mesh_1 = NETGEN_create_mesh(data, adams_partition, sub_mesh_auto_group, smesh)
 
-    else:
-        Mesh_1 = create_mesh(data , adams_partition , sub_mesh_auto_group, smesh)
-    
-    solid_array , group_array = create_solid_array(Mesh_1 , partition_exploded)
 
+    solid_array , group_array = create_solid_array(Mesh_1 , partition_exploded)
     fog_fog = find_face_of_god(smesh , group_array, data) 
 
     try:
