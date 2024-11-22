@@ -52,7 +52,7 @@ def write_header(proj_name,file):
     return()
 
 def write_simconst(file):
-    sim = 'Simulation\n  Max Output Level = 5\n  Coordinate System = Cartesian\n  Coordinate Mapping(3) = 1 2 3\n  Simulation Type = Steady state\n  Steady State Max Iterations = 1\n  Output Intervals(1) = 1\n  Coordinate Scaling = 1e-6\n  Solver Input File = case.sif\n  Post File = case.vtu\nEnd\n\nConstants\n  Gravity(4) = 0 -1 0 9.82\n  Stefan Boltzmann = 5.670374419e-08\n  Permittivity of Vacuum = 8.85418781e-12\n  Permeability of Vacuum = 1.25663706e-6\n  Boltzmann Constant = 1.380649e-23\n  Unit Charge = 1.6021766e-19\nEnd\n'
+    sim = 'Simulation\n  Max Output Level = 7\n  Coordinate System = Cartesian\n  Coordinate Mapping(3) = 1 2 3\n  Simulation Type = Steady state\n  Steady State Max Iterations = 1\n  Output Intervals(1) = 1\n  Coordinate Scaling = 1e-6\n  Solver Input File = case.sif\n  Post File = case.vtu\nEnd\n\nConstants\n  Gravity(4) = 0 -1 0 9.82\n  Stefan Boltzmann = 5.670374419e-08\n  Permittivity of Vacuum = 8.85418781e-12\n  Permeability of Vacuum = 1.25663706e-6\n  Boltzmann Constant = 1.380649e-23\n  Unit Charge = 1.6021766e-19\nEnd\n'
     file.write(sim)
     return()
 

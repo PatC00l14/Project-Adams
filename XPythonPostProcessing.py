@@ -42,7 +42,7 @@ def XXPy_postproc(project_name, sweeping_v):
                     except:
                         pass
                 elif sweeping_v ==0:
-                    axs[2].errorbar(fname[-7] , np.max(T), yerr = 2 * np.std(T) )
+                    #axs[2].errorbar(fname[-7] , np.max(T), yerr = 2 * np.std(T) )
                     axs[2].plot(float(fname[-7]),np.max(T) , 'ro', markersize=3)
             elif fname[-5] == 'Z':
                 T, Y = pandas_import_func(directory + f'/{fname}' , 'Z')

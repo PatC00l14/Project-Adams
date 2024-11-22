@@ -200,13 +200,12 @@ def create_submount(data, geompy):
             ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
             ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z)
             
-            
         else:
             ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
             ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40+data.au_cap+data.insul_z)
     
             ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
-            ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.data.au_cap+data.insul_z)
+            ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.au_cap+data.insul_z)
         return(ext_sink1, ext_sink2)
 
 
@@ -272,7 +271,7 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     write_ridge_bodies(data, pro_name)
     count = n_active * data.n_layers + 1
 
-    if data.au_cap_mat != 0:
+    if data.au_cap_mat != 0 and data.insul_mat !=0:
             insul_layer , au_layer = create_insulating_layer(data, geompy, base, base_0, e_stop)  
 
     for i in range ( 0 , n_active+1): #create trenches halfway between each active region
@@ -289,17 +288,17 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 0) , 20 , trench_z+10)
         back_facet_trench = geompy.MakeTranslation(back_trench, 0, base_y , base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
-        if data.au_cap_mat !=0:
+        if data.au_cap_mat !=0 and data.insul_mat !=0:
             au_layer = geompy.MakeCut(au_layer, back_facet_trench)
             insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
         back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , 20 , trench_z+10)
         back_facet_trench = geompy.MakeTranslation(back_trench, -base_x/2 , base_y + data.bfm -20, base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
-        if data.au_cap_mat !=0:
+        if data.au_cap_mat !=0 and data.insul_mat !=0:
             au_layer = geompy.MakeCut(au_layer, back_facet_trench)
             insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
 
-    if data.au_cap_mat!=0:
+    if data.au_cap_mat!=0 and data.insul_mat !=0:
         partition_array2, count = write_partition(partition_array2, au_layer, count, data.au_cap_mat, pro_name, repeat= 2 * n_active)
         partition_array2, count = write_partition(partition_array2, insul_layer, count, data.insul_mat, pro_name, repeat= 3 * n_active)
         partition_array = np.append(partition_array, au_layer)
@@ -315,16 +314,29 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
 
     #add submount or external_heatsink
 
-    submount = create_submount(data, geompy)
+    
+
+    new_method = True
+
     
     if device.ext_sink_mat !=0:
        if device.pside_down == 0:
+
             ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
             ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-100 , -ext_sink_z)
-            partition_array = np.append(partition_array , ext_sink)
-            partition_array2, count = write_partition(partition_array2, ext_sink, count, data.ext_sink_mat, pro_name)
+
+            submount = create_submount(data, geompy)
+
+            if new_method:
+                partition_array = np.append(partition_array, submount)
+                partition_array2, count = write_partition(partition_array2, submount, count, data.ext_sink_mat, pro_name)
+            else:
+                partition_array = np.append(partition_array , ext_sink)
+                partition_array2, count = write_partition(partition_array2, ext_sink, count, data.ext_sink_mat, pro_name)
+            
 
        elif device.pside_down == 1:
+           submount1 , submount2 = create_submount(data, geompy)
            if device.au_cap_mat ==0 or device.insul_mat == 0:
                ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
                ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40)
@@ -337,12 +349,20 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
                ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40+data.au_cap+data.insul_z)
     
                ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
-               ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.data.au_cap+data.insul_z)
-            
-           partition_array2, count = write_partition(partition_array2, ext_sink1, count, data.ext_sink_mat, pro_name)
-           partition_array2, count = write_partition(partition_array2, ext_sink2, count, data.ext_sink_mat, pro_name)
-           partition_array = np.append(partition_array , ext_sink1)
-           partition_array = np.append(partition_array , ext_sink2)
+               ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.au_cap+data.insul_z)
+           if new_method:
+    
+               partition_array2, count = write_partition(partition_array2, submount1, count, data.ext_sink_mat, pro_name)
+               partition_array2, count = write_partition(partition_array2, submount2, count, data.ext_sink_mat, pro_name)
+               partition_array = np.append(partition_array , submount1)
+               partition_array = np.append(partition_array , submount2)
+               
+           else:
+               partition_array2, count = write_partition(partition_array2, ext_sink1, count, data.ext_sink_mat, pro_name)
+               partition_array2, count = write_partition(partition_array2, ext_sink2, count, data.ext_sink_mat, pro_name)
+               partition_array = np.append(partition_array , ext_sink1)
+               partition_array = np.append(partition_array , ext_sink2)
+
 
            
         
@@ -362,7 +382,7 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     final_partition = geompy.MakePartition(partition_array.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
     #final_partition = geompy.MakePartition(partition_array2.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
 
-    return(final_partition , ridge)
+    return(final_partition , ridge, count)
 
 
 def create_cartridge(sc_data, geompy): #create the cartridge block
@@ -406,34 +426,34 @@ def cartridge_shit(data, geompy, chip, dump):
     return()
     
 
-def create_mesh(sc_data , fin_partition , sub_mesh_group , smesh):
+def create_submesh_group(geompy, fin_partition, explode_partiton, inds):
+    objs = []
 
-    fine_mesh = sc_data.r_mesh ; coarse_mesh = sc_data.bdy_mesh
+    for i in inds:
+        objs.append(explode_partiton[i])
 
-    Mesh_1 = smesh.Mesh(fin_partition,'Mesh_1')
-    GMSH = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH)
-    Gmsh_Parameters = GMSH.Parameters()
-    Gmsh_Parameters.Set2DAlgo( 0 )
-    Gmsh_Parameters.SetMinSize( 0 ) #minimum mesh size
-    Gmsh_Parameters.SetMaxSize( fine_mesh ) #maximum mesh size 
-    Gmsh_Parameters.SetSizeFactor( 1) #RIDGE MESH
-    Gmsh_Parameters.SetIs2d( 0 )
-    #Sub mesh group is meshed first. Set at a lower mesh quality to avoid over meshing in larger geometries
-    sub_mesh = True
-    if sub_mesh:
-        GMSH_1_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.GMSH , geom = sub_mesh_group)
-        Gmsh_Parameters_1 = GMSH_1_1.Parameters()
-        Gmsh_Parameters_1.Set2DAlgo( 0 )
-        Gmsh_Parameters_1.SetMinSize( 0 ) #minimum mesh size
-        Gmsh_Parameters_1.SetMaxSize( coarse_mesh ) #maximum mesh size
-        Gmsh_Parameters_1.SetSizeFactor( 1 ) #BODY MESH
-        Gmsh_Parameters_1.SetIs2d( 0 )
+    #sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"]) ##old code
+    #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
+
+    sub_mesh_auto_group = geompy.CreateGroup(fin_partition,geompy.ShapeType["SOLID"] )
+    geompy.UnionList(sub_mesh_auto_group, objs)
+    return(sub_mesh_auto_group)
+
     
-    isDone = Mesh_1.Compute()
-    return(Mesh_1)
+
+def NETGEN_submesh(sc_data, mesh_11, sm_autgroup):
+    ##define algo for 1D,2D
+    NETGEN_1D_2D = mesh_11.Triangle(algo=smeshBuilder.NETGEN_1D2D,geom=sm_autgroup)
+    NETGEN_2D_Simple_Parameters_1 = NETGEN_1D_2D.Parameters(smeshBuilder.SIMPLE)
+    #define algo for 3D
+    NETGEN_3D_1 = mesh_11.Tetrahedron(geom=sm_autgroup)
+    NETGEN_2D_Simple_Parameters_1.SetNumberOfSegments( 15 )
+    NETGEN_2D_Simple_Parameters_1.SetMaxElementArea( 1 )
+    NETGEN_2D_Simple_Parameters_1.SetAllowQuadrangles( 0 )
+
+    return(mesh_11)
 
 def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
-
 
     bdy_dim = sc_data.bdy_mesh ; r_dim = sc_data.r_mesh
     #ridge mesh properties 
@@ -441,7 +461,7 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
     NETGEN_1D_2D_3D = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D)
     NETGEN_3D_Parameters_1 = NETGEN_1D_2D_3D.Parameters()
     NETGEN_3D_Parameters_1.SetMaxSize( r_dim )
-    NETGEN_3D_Parameters_1.SetMinSize( 0.2)
+    NETGEN_3D_Parameters_1.SetMinSize( 0.1)
     NETGEN_3D_Parameters_1.SetSecondOrder( 0 )
     NETGEN_3D_Parameters_1.SetOptimize( 1 )
     NETGEN_3D_Parameters_1.SetFineness( 4 )
@@ -453,22 +473,42 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
     NETGEN_3D_Parameters_1.SetCheckChartBoundary( 176 )
     
     #Body mesh properties 
-    NETGEN_1D_2D_3D_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sub_mesh_group)
-    NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
-    NETGEN_3D_Parameters_2.SetMaxSize( bdy_dim )
-    NETGEN_3D_Parameters_2.SetMinSize( 15)
-    NETGEN_3D_Parameters_2.SetSecondOrder( 0 )
-    NETGEN_3D_Parameters_2.SetOptimize( 1 )
-    NETGEN_3D_Parameters_2.SetFineness( 3)
-    NETGEN_3D_Parameters_2.SetChordalError( -1 )
-    NETGEN_3D_Parameters_2.SetChordalErrorEnabled( 0 )
-    NETGEN_3D_Parameters_2.SetUseSurfaceCurvature( 1 )
-    NETGEN_3D_Parameters_2.SetFuseEdges( 1 )
-    NETGEN_3D_Parameters_2.SetQuadAllowed( 0 )
-    NETGEN_3D_Parameters_2.SetCheckChartBoundary( 176 )
+    new_method = True
+
+    if new_method:
+        Mesh_1 = NETGEN_submesh(sc_data, Mesh_1, sub_mesh_group)
+    else:
+        NETGEN_1D_2D_3D_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sub_mesh_group)
+        NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
+        NETGEN_3D_Parameters_2.SetMaxSize( bdy_dim )
+        NETGEN_3D_Parameters_2.SetMinSize( 10)
+        NETGEN_3D_Parameters_2.SetSecondOrder( 0 )
+        NETGEN_3D_Parameters_2.SetOptimize( 1 )
+        NETGEN_3D_Parameters_2.SetFineness( 3)
+        NETGEN_3D_Parameters_2.SetChordalError( -1 )
+        NETGEN_3D_Parameters_2.SetChordalErrorEnabled( 0 )
+        NETGEN_3D_Parameters_2.SetUseSurfaceCurvature( 1 )
+        NETGEN_3D_Parameters_2.SetFuseEdges( 1 )
+        NETGEN_3D_Parameters_2.SetQuadAllowed( 0 )
+        NETGEN_3D_Parameters_2.SetCheckChartBoundary( 176 )
 
     isDone = Mesh_1.Compute()
     return(Mesh_1)
+
+
+
+def NETGEN_prime():
+    return()
+
+def add_to_study(geompy, O_array , mult_ridg, part):
+    O , OX, OY,OZ = O_array
+    geompy.addToStudy( O, 'O' )
+    geompy.addToStudy( OX, 'OX' )
+    geompy.addToStudy( OY, 'OY' )
+    geompy.addToStudy( OZ, 'OZ' )
+    geompy.addToStudy(mult_ridg, 'multi ridge' )
+    geompy.addToStudy(part , 'final partition')
+    return()
 
 
 def find_face_of_god(smesh , group_array, data, scc  = False):
@@ -520,26 +560,28 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     OZ = geompy.MakeVectorDXDYDZ(0, 0, 1)
 
     #multi_ridge = create_ridges (data , geompy)
-    adams_partition, multi_ridge = create_device( data ,  geompy , back_facet_trench=False, middle_y=False, extra_width= True, pro_name=arg0)
+    adams_partition, multi_ridge, count = create_device( data ,  geompy , back_facet_trench=False, middle_y=False, extra_width= True, pro_name=arg0)
+    
+    count = count -1
 
-    partition_exploded = geompy.ExtractShapes(adams_partition, geompy.ShapeType["SOLID"], False) #exploded the object into a large array
-    sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
-    sub_mesh_group_3 = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
-
-    #geompy.UnionList(sub_mesh_group_3, )
-
-
+    partition_exploded = geompy.ExtractShapes(adams_partition, geompy.ShapeType["SOLID"], False)#exploded the object into a large array
+    
     if data.pside_down ==0:
-        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
+        sub_mesh_auto_group = create_submesh_group(geompy, adams_partition, partition_exploded, inds=[-2, -1])
+        AU_layer_SMAG = create_submesh_group(geompy, adams_partition, partition_exploded, inds=[1,2])
+        #sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
+        #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-2:])
     elif data.pside_down ==1:
+        sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
         geompy.UnionList(sub_mesh_auto_group, partition_exploded[-3:-1])
-
+    
+    add_to_study(geompy, [O,OX,OY,OZ] , multi_ridge, adams_partition)
 
     geompy.addToStudy( O, 'O' )
     geompy.addToStudy( OX, 'OX' )
     geompy.addToStudy( OY, 'OY' )
     geompy.addToStudy( OZ, 'OZ' )
-    geompy.addToStudy( multi_ridge, 'multi ridge' )
+    geompy.addToStudy(multi_ridge, 'multi ridge' )
     geompy.addToStudy(adams_partition , 'final partition')
 
     for i in range( 0 , len(partition_exploded)):
@@ -550,8 +592,9 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     netgen = True
 
     if netgen:
-        if arg0 != 'y':
+        if arg0 == 'y':
             Mesh_1 = NETGEN_create_mesh(data, adams_partition, sub_mesh_auto_group, smesh)
+
     else:
         Mesh_1 = create_mesh(data , adams_partition , sub_mesh_auto_group, smesh)
     
