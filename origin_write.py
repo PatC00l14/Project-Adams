@@ -43,8 +43,8 @@ class MySemiconductor:
 
         self.insul_mat = int(input_dat[1,25])
         self.insul_z = float(input_dat[1,26])
-
         self.pside_down = int(input_dat[1,27])
+        self.current_model = int(input_dat[1,28])
 
 def write_header(proj_name,file):
     header = f'Header\n  CHECK KEYWORDS Warn\n  Mesh DB "{proj_name}" "dummy"\n  Include Path ""\n  Results Directory ""\nEnd\n\n'
@@ -177,12 +177,14 @@ def write_ridge_bodiesx( device, project_name):
     return()
 
 
-def write_solver(file, scc = False): #write the solver section - requires not specific input. Parameters here can be altered for more advanced simulations
+def write_solver(file, scc = 0): #write the solver section - requires not specific input. Parameters here can be altered for more advanced simulations
     #solver = ' \n Solver 1 \n  Equation = Navier-Stokes\n  Procedure = "FlowSolve" "FlowSolver"\n  Variable = Flow Solution[Velocity:3 Pressure:1]\n  Exec Solver = Always \n  Stabilize = True \n  Optimize Bandwidth = True \n  Steady State Convergence Tolerance = 1.0e-5 \n  Nonlinear System Convergence Tolerance = 1.0e-7 \n  Nonlinear System Max Iterations = 20 \n  Nonlinear System Newton After Iterations = 3 \n  Nonlinear System Newton After Tolerance = 1.0e-3 \n  Nonlinear System Relaxation Factor = 1 \n  Linear System Solver = Iterative \n  Linear System Iterative Method = BiCGStab \n  Linear System Max Iterations = 500 \n  Linear System Convergence Tolerance = 1.0e-10 \n  BiCGstabl polynomial degree = 2 \n  Linear System Preconditioning = ILU0 \n  Linear System ILUT Tolerance = 1.0e-3 \n  Linear System Abort Not Converged = False \n  Linear System Residual Output = 10 \n  Linear System Precondition Recompute = 1 \n End \n Solver 2\n  Equation = Heat Equation\n  Variable = Temperature\n  Procedure = "HeatSolve" "HeatSolver"\n  Exec Solver = Always\n  Stabilize = True\n  Optimize Bandwidth = True\n  Steady State Convergence Tolerance = 1.0e-5\n  Nonlinear System Convergence Tolerance = 1.0e-7\n  Nonlinear System Max Iterations = 20\n  Nonlinear System Newton After Iterations = 3\n  Nonlinear System Newton After Tolerance = 1.0e-3\n  Nonlinear System Relaxation Factor = 1\n  Linear System Solver = Iterative\n  Linear System Iterative Method = BiCGStab\n  Linear System Max Iterations = 500\n  Linear System Convergence Tolerance = 1.0e-10\n  BiCGstabl polynomial degree = 2\n  Linear System Preconditioning = ILU0\n  Linear System ILUT Tolerance = 1.0e-3\n  Linear System Abort Not Converged = False\n  Linear System Residual Output = 10\n  Linear System Precondition Recompute = 1\nEnd'
-    if not scc:
+    if scc == 0:
         solver1 = open('C:/Projects/Perry_run/case_text/case_solver.txt' , 'r')
-    else: 
+    elif scc ==1: 
         solver1 = open('C:/Projects/Perry_run/case_text/case_solverSCC.txt' , 'r')
+    else:
+        raise('Error: wrong input type of SCC on (1) or off (0)')
     solver = solver1.read()
     file.write(solver)
     solver1.close()

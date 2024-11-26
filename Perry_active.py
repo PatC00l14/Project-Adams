@@ -29,8 +29,11 @@ def perry_active(project_name, v0, v1, delv, sweeping_V):
             os.system(f"SALOME-9.13.0\W64\Python\python3.exe SALOME-9.13.0\salome -t Perry_Salome_nemo.py args:{project_name},{V},{sweeping_V}")
             #get ready for elmer
             os.chdir(f"C:/ElmerFEm/ElmerFEM/bin")
-            os.system(f'elmergrid 8 2 {project_name}/temp_save.unv -autoclean -relh 0.1 -out {project_name}/dummy')
-            os.system(f'elmersolver > {project_name}/convergence_log.log 2>&1')
+            if not os.path.exists(f'C:/ElmerFEm/ElmerFEM/bin/{proj_name}/temp_save.unv'): 
+                os.system(f'elmergrid 8 2 {project_name}/temp_save.unv -autoclean -relh 0.1 -out {project_name}/dummy')
+                os.system(f'elmersolver > {project_name}/convergence_log.log 2>&1')
+            else:
+                sys.exit()
     
             #copying and saving of design, results and logs to relative folders
             shutil.move(f"{project_name}/temp_save.unv" , f"../../../Projects/Projects/{project_name}/UNV/{V}.unv")
