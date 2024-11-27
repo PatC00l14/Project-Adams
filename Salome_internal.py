@@ -17,22 +17,33 @@ from salome.geom import geomBuilder
 import  SMESH, SALOMEDS
 from salome.smesh import smeshBuilder
 
-def write_ridge_bodies( device, project_name): 
+def write_ridge_bodies( device, project_name, scc = 0): 
     body_string = '\n'
 
     n_r = device.n_ridges #number of ridges per chip
     n_l = device.n_layers #number of layers per ridge
 
-    for r in range(0, n_r): #ridge index
-        count = 1
-        for l in range(1,n_l+1): #layer index
-            num = r*(n_l) + l
-            if device.r_heat_power[l-1] *device.r_onoff[r] !=0: #this means there IS heating in this layer
-                body_string = body_string + write_ind_body(num, device.r_materials[l-1] ,count) + f'\n'
-                count += 1
-            else:
-                body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + f'\n'
-    num = (n_r*n_l) + 1
+    if scc == 0:
+
+        for r in range(0, n_r): #ridge index
+            count = 1
+            for l in range(1,n_l+1): #layer index
+                num = r*(n_l) + l
+                if device.r_heat_power[l-1] *device.r_onoff[r] !=0: #this means there IS heating in this layer
+                    body_string = body_string + write_ind_body(num, device.r_materials[l-1] ,count) + f'\n'
+                    count += 1
+                else:
+                    body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + f'\n'
+        num = (n_r*n_l) + 1
+
+    elif scc == 1:
+        for r in range(0, n_r): #ridge index
+                count = 1
+                for l in range(1,n_l+1): #layer index
+                    num = r*(n_l) + l
+                    body_string = body_string + write_ind_body(num, device.r_materials[l-1] , 0) + f'\n'   
+    else:
+        raise('Error: wrong input type of SCC on (1) or off (0)')
 
     file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'a')
     file.write(f'{body_string}')
@@ -53,20 +64,28 @@ def write_ind_bodyx(ind , material , body_force, project_name): # write an indiv
 
 
 
-def write_boundary_conds(boundary1 , arg0 ,dat): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
+def write_boundary_conds(boundary1 , arg0 ,dat, bound_scc = 0, potential = 300): #heat sink temperature - though is not necessarily that complicated to change the input into an arry
     #here we need the boundary number of the lowest boundary (which was far too much effort to determing from the stupid Salome simulations)
     mypath = f'C:/ElmerFEM/ElmerFEM/bin/{arg0}/'
     path = os.path.join(mypath , 'case.sif')
     
-    bound_cond1 = f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {boundary1}\n  Name = "Heat Sink"\n  Temperature = {dat.T_sink}\nEnd'
-    
+    if dat.current_model ==0:
+
+        bound_cond1 = f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {boundary1}\n  Name = "Heat Sink"\n  Temperature = {dat.T_sink}\nEnd'
+    elif dat.current_model ==1:
+
+        scc_string = (np.array2string(bound_scc)[1:-1])
+        bound_cond_scc = f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {scc_string}\n  Name = "Potential Bondary"\n  Potential = {potential}\nEnd'
+        bound_cond_scc += f'\n\nBoundary Condition 1\n  Target Boundaries(1) = {boundary1}\n  Name = "GROUND"\n  Potential = 0\nEnd'
+    else:
+        raise('Error: wrong input type of SCC on (1) or off (0)')
     
     try:
         file = open(path , 'a') 
         file.write(bound_cond1)
         file.close()
     except:
-        print("fucking error")
+        raise("Error: unable to write boundary conditions - perhaps face index was not found")
  
     
     return()
@@ -307,8 +326,7 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
         partition_array = np.append(partition_array, au_layer)
         partition_array = np.append(partition_array, insul_layer)
     
-    WB_bool = True
-    if WB_bool:
+    if data.current_model == 1:
         partition_array, count = create_wirebonds(data, geompy, partition_array, pro_name, count = count)
     
     base = geompy.MakeCut(base, base_0) #separate upper and main part of the chip as a viscous layer
@@ -438,18 +456,16 @@ def NETGEN_submesh(sc_data, mesh_11, sm_autgroup, sink = False):
         NETGEN_3D_Parameters_2.SetCheckChartBoundary( 176 )
 
     else:
-        NETGEN_1D_2D = mesh_11.Triangle(algo=smeshBuilder.NETGEN_1D2D,geom=sm_autgroup)
-        sm_object = NETGEN_1D_2D.GetSubMesh()
-        NETGEN_2D_Simple_Parameters_1 = NETGEN_1D_2D.Parameters(smeshBuilder.SIMPLE)
-        #define algo for 3D
-        NETGEN_3D_1 = mesh_11.Tetrahedron(geom=sm_autgroup)
-        NETGEN_2D_Simple_Parameters_1.SetNumberOfSegments( 15 )
-        NETGEN_2D_Simple_Parameters_1.SetMaxElementArea( 1 )
-        NETGEN_2D_Simple_Parameters_1.SetAllowQuadrangles( 0 )
+        NETGEN_1D_2D_3D_2 = mesh_11.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sm_autgroup)
+        sm_object = NETGEN_1D_2D_3D_2.GetSubMesh()
+        NETGEN_3D_Simple_Parameters_2 = NETGEN_1D_2D_3D_2.Parameters(smeshBuilder.SIMPLE)
+        NETGEN_3D_Simple_Parameters_2.SetLocalLength( 0.5 )
+        NETGEN_3D_Simple_Parameters_2.LengthFromEdges()
+        NETGEN_3D_Simple_Parameters_2.LengthFromFaces()
 
     return(mesh_11, sm_object)
 
-def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
+def NETGEN_create_mesh(sc_data, fin_partition, smesh):
 
     bdy_dim = sc_data.bdy_mesh ; r_dim = sc_data.r_mesh
     #ridge mesh properties 
@@ -470,30 +486,6 @@ def NETGEN_create_mesh(sc_data, fin_partition, sub_mesh_group, smesh):
     
     #Body mesh properties 
     new_method = 2
-
-    if new_method == 1:
-        #seperate submesh function
-        Mesh_1, sm_object = NETGEN_submesh(sc_data, Mesh_1, sub_mesh_group)
-        isDone = Mesh_1.Compute()
-    elif new_method ==0:
-        #old method - only a single submesh for the base and submount
-        NETGEN_1D_2D_3D_1 = Mesh_1.Tetrahedron(algo=smeshBuilder.NETGEN_1D2D3D,geom=sub_mesh_group)
-        NETGEN_3D_Parameters_2 = NETGEN_1D_2D_3D_1.Parameters()
-        NETGEN_3D_Parameters_2.SetMaxSize( bdy_dim )
-        NETGEN_3D_Parameters_2.SetMinSize( 10)
-        NETGEN_3D_Parameters_2.SetSecondOrder( 0 )
-        NETGEN_3D_Parameters_2.SetOptimize( 1 )
-        NETGEN_3D_Parameters_2.SetFineness( 3)
-        NETGEN_3D_Parameters_2.SetChordalError( -1 )
-        NETGEN_3D_Parameters_2.SetChordalErrorEnabled( 0 )
-        NETGEN_3D_Parameters_2.SetUseSurfaceCurvature( 1 )
-        NETGEN_3D_Parameters_2.SetFuseEdges( 1 )
-        NETGEN_3D_Parameters_2.SetQuadAllowed( 0 )
-        NETGEN_3D_Parameters_2.SetCheckChartBoundary( 176 )
-        isDone = Mesh_1.Compute()
-    elif new_method==2:
-        #new new method to use submesh outside this function and call mulitple submeshes if need be
-        pass
     
     #set order or submeshes -  need to create submesh objects - how?
     #isDone = Main_Mesh.SetMeshOrder( [ [ Au_layer_MESH, Insulation_Layer_MESH, Ridge_MESH, Coarse_body_mesh, Buffer_layer_MESH ] ])
@@ -593,19 +585,33 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
             au_ins , insul_inds = get_wirebond_index(data) 
             au_smag = create_submesh_group(geompy, adams_partition, partition_exploded, au_ins)
             ins_smag = create_submesh_group(geompy, adams_partition, partition_exploded, insul_inds)
-            sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-2,-1])
+            if data.ext_sink_mat !=0:
+                sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-2,-1])
             #start creating the mesh and submeshes
-            Mesh_1 = NETGEN_create_mesh(data, adams_partition, sink_smag, smesh)
+            Mesh_1 = NETGEN_create_mesh(data, adams_partition, smesh)
             Mesh_1, au_smObj = NETGEN_submesh(data, Mesh_1, au_smag, sink = False )
             Mesh_1, ins_smObj =  NETGEN_submesh(data, Mesh_1, ins_smag, sink = False )
+            if data.ext_sink_mat !=0:
+                Mesh_1, sink_smObj =  NETGEN_submesh(data, Mesh_1, sink_smag, sink = True )
+                isDone = Mesh_1.SetMeshOrder( [ [ au_smObj, ins_smObj, sink_smObj] ])
+            else:
+                isDone = Mesh_1.SetMeshOrder( [ [ au_smObj, ins_smObj] ])
+            isDone = Mesh_1.Compute()
+        else:
+            sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-2,-1])
+            Mesh_1 = NETGEN_create_mesh(data, adams_partition, smesh)
             Mesh_1, sink_smObj =  NETGEN_submesh(data, Mesh_1, sink_smag, sink = True )
-
-            isDone = Mesh_1.SetMeshOrder( [ [ au_smObj, ins_smObj, sink_smObj] ])
             isDone = Mesh_1.Compute()
 
+
     elif data.pside_down ==1:
-        sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
-        geompy.UnionList(sub_mesh_auto_group, partition_exploded[-3:-1])
+        sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-2,-1])
+        Mesh_1 = NETGEN_create_mesh(data, adams_partition, sink_smag, smesh)
+        Mesh_1, sink_smObj =  NETGEN_submesh(data, Mesh_1, sink_smag, sink = True )
+        isDone = Mesh_1.Compute()
+
+        #sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
+        #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-3:-1])
     
     add_to_study(geompy, [O,OX,OY,OZ] , multi_ridge, adams_partition, partition_exploded)
 
@@ -625,7 +631,7 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
 
 
     solid_array , group_array = create_solid_array(Mesh_1 , partition_exploded)
-    
+
     fog_fog = find_face_of_god(smesh , group_array, data) 
 
     try:
@@ -638,6 +644,7 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     print(pd.__file__)
     print('#####################################################')
     return(fog_fog)
+    
 
 arg1 = 'y' #project name - can also take in more arguments if necessary
 

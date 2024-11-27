@@ -48,6 +48,7 @@ Material 6
   Density = 2920
   Porosity Model = Always saturated
   Heat Conductivity = 321
+  Electric Conductivity = 321
 End
 
 Material 7
@@ -93,6 +94,7 @@ Material 10
   Density = 5300
   Porosity Model = Always saturated
   Heat Conductivity = 24.92560682
+  Electric Conductivity = 10e6
 End
 
 Material 11

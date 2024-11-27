@@ -190,10 +190,10 @@ def write_solver(file, scc = 0): #write the solver section - requires not specif
     solver1.close()
     return()
 
-def write_equation(file, scc = False): #write the equation section - simply activates the heat solver within the multiphysics simulations
-    if not scc:
+def write_equation(file, scc = 0): #write the equation section - simply activates the heat solver within the multiphysics simulations
+    if scc == 0 :
         eqn = '\n\nEquation 1\n  Name = "Heat equation"\n  Active Solvers(1) = 1\nEnd\n\n'
-    else:
+    elif scc == 1:
         eqn = '\n\nEquation 1\n  Name = "Static Current Solver"\n  Active Solvers(1) = 1\nEnd\n\n'
     file.write(eqn)
     return()
@@ -272,11 +272,12 @@ def global_write1(project_name , device):
 
 def global_write2(project_name , device):
     my_file = open(f'C:/ElmerFEM/ElmerFEM/bin/{project_name}/case.sif' , 'a')
-    write_solver(my_file)
-    write_equation(my_file)
+    write_solver(my_file, scc = device.current_model)
+    write_equation(my_file, scc = device.current_model)
     write_materials(my_file)
-    write_body_forces(device,my_file) #needs heat power for each ridge
-    write_initial_conds(my_file , T_init = device.T_sink+10)#can take in the a different initial temp if that is of interest
+    if device.current_model ==0:
+        write_body_forces(device,my_file) #needs heat power for each ridge
+        write_initial_conds(my_file , T_init = device.T_sink+10)#can take in the a different initial temp if that is of interest
     #write_boundary_conds -DO NOT EXECUTE HERE, needs Salome input so execute direclty from Salome script
     write_ESSI(project_name)
     my_file.close()
