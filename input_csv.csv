@@ -1,7 +1,7 @@
 ﻿Device ,,,,Laser / ridge structure,,,,,,,Mesh linear length (um),,,Submount dimensions,,Metal Stack,,BFM,Thermistor,,Trench,Cartidge,,No of chips,Insulating layer,,,
 No. of ridges,Ridges ON,"Device x,y,z (um)",Material,No of Layers,Height (um),Widths (um),Length (um),Material,Heat Power (W),Heat sink temp (C ),Body ,Ridge,Ridge Height (um),"X , Y , Z (um)",Material,Thickness (um),Material,Length (um),Dimension,Material,"Trench (x,y,z)",Material,Dimensions(mm),,Material,Thickness(um),P-side down,SCC - Current Model
-3,1,250,11,5,1.5,10,750,11,0,55,30,7,-0.19,3000,6,0.4,2,0,0,0,10,0,0,3,13,0.3,0,0
-,1,750,,,1.5,10,750,11,0,,,,,3000,,,,,0,,2000,,0,,,,,
-,1,300,,,0.5,10,750,10,0.3036,,,,,625,,,,,0,,10,,0,,,,,
+1,1,250,11,5,1.5,10,750,11,0,55,30,2,-0.19,3000,0,0.4,2,0,0,0,10,0,0,3,13,0.3,0,0
+,,750,,,1.5,10,750,11,0,,,,,3000,,,,,0,,2000,,0,,,,,
+,,300,,,0.5,10,750,10,0.3036,,,,,625,,,,,0,,10,,0,,,,,
 ,,,,,1.1,2.2,750,11,0.1012,,,,,,,,,,,,,,,,,,,
 ,,,,,0.4,2.2,750,11,0.1012,,,,,,,,,,,,,,,,,,,

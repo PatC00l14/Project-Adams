@@ -47,7 +47,7 @@ class MySemiconductor:
         self.current_model = int(input_dat[1,28])
         
         self.arb_param = int(1)
-        
+
     def get_estop_prime(self):
             ##quick method to find the estop height to determine the ridge trench depth
         r_widths = self.r_widths
@@ -233,8 +233,9 @@ def write_body_forces(device, file):
             bdy_force = f'Body Force {count}\n  Name = "Body Force {count}"\n  Integral Heat Source = {i * multiplier}\n  Heat Source = 1\nEnd\n\n'
             file.write(bdy_force)
             count += 1
-    if device.arb_param ==1:
+    if 1 ==1:
         bdy_force = f'Body Force {count}\n  Name = "Body Force {count}"\n  Integral Heat Source = {0.5* multiplier}\n  Heat Source = 1\nEnd\n\n'
+        file.write(bdy_force)
         count+=1
 
     return() 
