@@ -45,6 +45,18 @@ class MySemiconductor:
         self.insul_z = float(input_dat[1,26])
         self.pside_down = int(input_dat[1,27])
         self.current_model = int(input_dat[1,28])
+        
+        self.arb_param = int(1)
+        
+    def get_estop_prime(self):
+            ##quick method to find the estop height to determine the ridge trench depth
+        r_widths = self.r_widths
+        for i in range(1 , self.n_layers):
+            if self.r_widths < self.r_widths[i-1]:
+                num = i
+                break
+        return(np.sum(self.r_heights[num:]))
+    
 
 def write_header(proj_name,file):
     header = f'Header\n  CHECK KEYWORDS Warn\n  Mesh DB "{proj_name}" "dummy"\n  Include Path ""\n  Results Directory ""\nEnd\n\n'
@@ -221,8 +233,10 @@ def write_body_forces(device, file):
             bdy_force = f'Body Force {count}\n  Name = "Body Force {count}"\n  Integral Heat Source = {i * multiplier}\n  Heat Source = 1\nEnd\n\n'
             file.write(bdy_force)
             count += 1
-        else:
-            pass
+    if device.arb_param ==1:
+        bdy_force = f'Body Force {count}\n  Name = "Body Force {count}"\n  Integral Heat Source = {0.5* multiplier}\n  Heat Source = 1\nEnd\n\n'
+        count+=1
+
     return() 
 
 def write_initial_conds(file ,T_init = 60): #initial temp of all objects, doesnt matter too much for steady state simulations 
