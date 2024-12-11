@@ -46,7 +46,7 @@ class MySemiconductor:
         self.pside_down = int(input_dat[1,27])
         self.current_model = int(input_dat[1,28])
         
-        self.arb_param = int(1)
+        self.arb_param = int(0)
 
     def get_estop_prime(self):
             ##quick method to find the estop height to determine the ridge trench depth
