@@ -761,7 +761,7 @@ elif sweeping_V == 7:
 elif sweeping_V ==0:
     pass
 elif sweeping_V == 9:
-    device.device_arb_parameter = V
+    device.bfm = V
     pass_string = 'arb sweep: bfm lenght at 80um deep trench'
 
 global_write1(arg1, device) #write the first part

@@ -121,13 +121,20 @@ def create_ridges(sc_data , geompy, middle_y = True): #this function creates the
     return(combined_ridge)
 
 
-def write_partition(obj, part_arr, count,  mat, proj_name, name = 'Body Property', bdy = 0, repeat = 1):
+def write_partition_XXDEADDONTUSE(obj, part_arr, count,  mat, proj_name, name = 'Body Property', bdy = 0, repeat = 1):
     #function to add to the partition and write to the case.sif file at the same time to keep track of the order of materials added
     for i in range(repeat):
         part_arr = np.append(part_arr, obj)
         write_ind_bodyx(count, mat, bdy, proj_name, name = name)
         count += 1
     return(part_arr, count)
+
+def write_partition(count,  mat, proj_name, name = 'Body Property', bdy = 0, repeat = 1):
+    #function to add to the partition and write to the case.sif file at the same time to keep track of the order of materials added
+    for i in range(repeat):
+        write_ind_bodyx(count, mat, bdy, proj_name, name = name)
+        count += 1
+    return(count)
 
 def get_wirebond_index(sc_data):
     #I-A-I-I-A
@@ -230,17 +237,17 @@ def create_insulating_layer(data, geompy, base, base0, e_stop, pro_name , count 
         insul_layer = geompy.MakeCut(insul_layer, ins_cut)
     
     if write:
-        if data.current_model ==0:
+        if data.current_model == 0:
             au_inds, insul_inds = get_wirebond_index(data)
             for au in au_inds:
-                empty_part, count = write_partition(au_layer, empty_part, au, 2, pro_name, name = 'Au cap')
+                count = write_partition(au, 2, pro_name, name = 'Au cap')
             for ins in insul_inds:
-                empty_part, count = write_partition(insul_layer, empty_part, ins, 13, pro_name, name = 'insul cap')
+                count = write_partition(ins, 13, pro_name, name = 'insul cap')
     
         elif data.current_model ==1:
             au_inds = get_current_model_wirebond_index(data)
             for au in au_inds:
-                empty_part, count = write_partition(au_layer, empty_part, au, 2, pro_name, name = 'au cap')
+                count = write_partition(au, 2, pro_name, name = 'au cap')
 
     return(insul_layer, au_layer, count)
 
@@ -253,8 +260,8 @@ def create_insulating_layer2_devopsstuff(data, geompy, base, base0, e_stop, pro_
     [trench_x, trench_y , trench_z] = data.trench_dim
     n_ridges = data.n_ridges
 
-    h_in = 0.3 #insulation thickness - will be assigned at some point
-    h_au = 0.3 #Gold thickness - can be assigned now but I cba at the minute
+    h_in = data.insul_z #insulation thickness - will be assigned at some point
+    h_au = data.au_cap #Gold thickness - can be assigned now but I cba at the minute
     r_tx = 22 #ridge trench width
     r_wx = np.min(data.r_widths) #width of the ridge
     r_space = 0.5 * (r_tx - r_wx) #width of space from ridge edge to trench edge
@@ -263,14 +270,14 @@ def create_insulating_layer2_devopsstuff(data, geompy, base, base0, e_stop, pro_
     #               |_r_space_|       |_________|
     #                           r_tx            
 
-    insul_layer = geompy.MakeBoxDXDYDZ(base_x -(trench_x + 20), base_y+data.bfm, base_z + h_in)
+    insul_layer = geompy.MakeBoxDXDYDZ(base_x -(trench_x + 20), base_y, base_z + h_in)
     insul_layer = geompy.MakeTranslation(insul_layer, 0.5 * (trench_x + 20), 0, 0)
     insul_layer = geompy.MakeCut(insul_layer, base0)    
     insul_layer = geompy.MakeCut(insul_layer, base)
     insul_trench = geompy.MakeBoxDXDYDZ(r_space - 2*h_in, base_y, e_stop)
     insul_trench = geompy.MakeTranslation(insul_trench, - 0.5 * (r_space - 2*h_in), 0, base_z - e_stop + h_in)
 
-    au_layer = geompy.MakeBoxDXDYDZ(base_x-(trench_x + 20), base_y+data.bfm, base_z + h_in + h_au)
+    au_layer = geompy.MakeBoxDXDYDZ(base_x-(trench_x + 20), base_y, base_z + h_in + h_au)
     au_layer = geompy.MakeTranslation(au_layer,  0.5 * (trench_x + 20), 0, 0)
     au_layer = geompy.MakeCut(au_layer, base0)
     au_layer = geompy.MakeCut(au_layer, base)
@@ -296,31 +303,33 @@ def create_insulating_layer2_devopsstuff(data, geompy, base, base0, e_stop, pro_
     insul_layer = geompy.MakeCut(insul_layer, ins_cut)
 
     if data.bfm !=0:
-        bfm_trench1 = geompy.MakeBoxDXDYDZ(base_x*(data.n_ridges+1), trench_x, trench_z)
-        bfm_trench1 = geompy.MakeTranslation(bfm_trench1, -base_x/2, base_y, base_z - trench_z)
-        insul_layer = geompy.MakeCut(insul_layer, bfm_trench1)
-        au_layer = geompy.MakeCut(au_layer, bfm_trench1)
-        bfm_trench2 =  geompy.MakeTranslation(bfm_trench1, -base_x/2, base_y -20 , base_z - trench_z)
-        insul_layer = geompy.MakeCut(insul_layer, bfm_trench2)
-        au_layer = geompy.MakeCut(au_layer, bfm_trench2)
+        if 1==2:
+            au_layer = cut_bfm_trenches(data, geompy, au_layer)
+            insul_layer = cut_bfm_trenches(data, geompy, insul_layer)
+        else:
+            bfm_trench1 = geompy.MakeBoxDXDYDZ(base_x*(data.n_ridges+1), trench_x, trench_z)
+            bfm_trench1 = geompy.MakeTranslation(bfm_trench1, -base_x/2, base_y, base_z - trench_z)
+            bfm_trench2 =  geompy.MakeTranslation(bfm_trench1, -base_x/2, base_y -20 , base_z - trench_z)
 
-    
+            insul_layer = geompy.MakeCut(insul_layer, bfm_trench1)
+            au_layer = geompy.MakeCut(au_layer, bfm_trench1)
+
+            insul_layer = geompy.MakeCut(insul_layer, bfm_trench2)
+            au_layer = geompy.MakeCut(au_layer, bfm_trench2)
+
     empty = np.array([])
     
     if write:
         for i in range(n_ridges):
             au_layer_update = geompy.MakeTranslation(au_layer, base_x*i, 0, 0)
             partition = geompy.append(partition, au_layer_update)
-            empty,count = write_partition(au_layer, empty, count, 2, pro_name, name = 'Au layer')
+            count = write_partition(count, 2, pro_name, name = 'Au layer')
             insul_layer_update = geompy.MakeTranslation(insul_layer, base_x*i, 0, 0)
             partition = np.append(partition, insul_layer_update)
-            empty,count = write_partition(insul_layer, empty, count, 13, pro_name, name = 'Au layer')
+            count = write_partition(count, 13, pro_name, name = 'Insul layer')
         return(partition, count, insul_layer, au_layer )
     else:
         return(insul_layer, au_layer)
-
-
-
 
 
 def create_wirebonds(data, geompy, partition, pro_name, n_wirebonds = 1, count = 0):
@@ -339,7 +348,7 @@ def create_wirebonds(data, geompy, partition, pro_name, n_wirebonds = 1, count =
                 wire_bond_set = geompy.MakeTranslation(wire_bond, x_pos, y_pos, base_z + data.au_cap+data.insul_z)
                 partition = np.append(partition, wire_bond_set)
         
-        wire_bond_partition, count = write_partition(wire_bond_set, wire_bond_partition, count, data.au_cap_mat, pro_name, repeat=data.n_ridges * n_wirebonds, name='Wirebonds')          
+        count = write_partition(count, data.au_cap_mat, pro_name, repeat=data.n_ridges * n_wirebonds, name='Wirebonds')          
 
         return(partition, count)
 
@@ -351,29 +360,41 @@ def create_pdown_layer(data, geompy, base, base0, estop,  pro_name, count, parti
     [trench_x, trench_y, trench_z] = data.trench_dim
 
     insul_layer , au_ignore = create_insulating_layer2_devopsstuff(data, geompy, base, base0, estop, pro_name, partition, write = False)
-
-
-    z_au = 2
-
+    
     empty = np.array([])
 
-    au_body = geompy.MakeBoxDXDYDZ(base_x - (trench_x + 10), base_y, estop + z_au)
+    au_body = geompy.MakeBoxDXDYDZ(base_x - (trench_x + 10), base_y, estop + data.au_cap+ data.insul_z)
     au_body = geompy.MakeTranslation(au_body, (trench_x + 10)/2, 0, base_z - estop)
 
-    au_body = geompy.MakeCut(au_body, insul_layer)
-    au_body = geompy.MakeCut(au_body, base)
+    au_body = geompy.MakeCut(au_body, insul_layer, True)
+    au_body = geompy.MakeCut(au_body, base, True)
 
     for i in range(data.n_ridges):
         au_bodyCUT = geompy.MakeTranslation(au_body, i*base_x, 0, 0) 
-        empty, count = write_partition(au_bodyCUT, empty, count, 2, pro_name, name = 'Thick Au filling')
+        count = write_partition(count, 2, pro_name, name = 'Thick Au filling')
         partition = np.append(partition, au_bodyCUT)
 
         insul_update = geompy.MakeTranslation(insul_layer, i*base_x, 0, 0 )
-        empty, count = write_partition(insul_update, empty, count, 13, pro_name, name = 'insulation layer')
+        count = write_partition(count, 13, pro_name, name = 'insulation layer', repeat= 2)
         partition = np.append(partition, insul_update)
-    
 
-    return(partition)
+    opening_dim = [70, 730, 0.2]
+
+    au_inbetweenlayer = geompy.MakeBoxDXDYDZ(base_x*data.n_ridges, base_y, opening_dim[2])
+    au_inbetweenlayer = geompy.MakeTranslation(au_inbetweenlayer, 0, 0, base_z+ data.au_cap+ data.insul_z)
+
+    opening = geompy.MakeBoxDXDYDZ(opening_dim[0]/2, opening_dim[1], opening_dim[2])
+    opening = geompy.MakeTranslation(opening, -opening_dim[0]/4, (base_y - opening_dim[1])/2, base_z+ data.au_cap+ data.insul_z)
+
+    for i in range(0, 2* data.n_ridges):
+        xpos = 0.5 *(i+0.5)*base_x
+        opening_cut = geompy.MakeTranslation(opening,xpos, 0, 0 )
+        au_inbetweenlayer = geompy.MakeCut(au_inbetweenlayer, opening_cut, True)
+
+    count = write_partition(count, 13, pro_name, name = 'Isolation')
+    partition = np.append(partition, au_inbetweenlayer)
+
+    return(partition, count)
     
 def create_thick_au_pads(data, geompy, partition, pro_name, count = 0):
     
@@ -392,7 +413,7 @@ def create_thick_au_pads(data, geompy, partition, pro_name, count = 0):
             partition = np.append(partition, wire_bond_set)
         
         bdy_num = np.sum(1 for x in data.r_heat_power if x!=0)
-        wire_bond_partition, count = write_partition(wire_bond_set, wire_bond_partition, count, data.au_cap_mat, pro_name, repeat=data.n_ridges, bdy = bdy_num + 1, name= 'Thick Au Pad')          
+        count = write_partition(count, data.au_cap_mat, pro_name, repeat=data.n_ridges, bdy = bdy_num + 1, name= 'Thick Au Pad')          
     
         return(partition, count)
     
@@ -422,39 +443,40 @@ def create_heater(data, geompy, partition, pro_name, count=0):
         bdy_num = int(sum( 1 for x in data.r_heat_power if x!=0 )) + 1
 
         partition = np.append(partition, ins_place)
-        empty_part, count = write_partition(ins_place, empty_part, count, data.insul_mat, pro_name, name = 'Heater insulation')
+        count = write_partition(count, data.insul_mat, pro_name, name = 'Heater insulation')
 
         partition = np.append(partition, heater_place)
-        empty_part, count = write_partition(heater_place, empty_part, count, data.insul_mat,pro_name, bdy = bdy_num, name = 'Heater')
+        count = write_partition(count, data.insul_mat,pro_name, bdy = bdy_num, name = 'Heater')
 
     return(partition, count)
 
-def create_submount(data, geompy):
+def create_submount(data, geompy, partition, count, pro_name):
 
     [ext_sink_x,ext_sink_y,ext_sink_z] = data.ext_sink_dim
     n_active = data.n_ridges
     [base_x, base_y, base_z] = data.device_dim
 
-    
+    empty = np.array([])
+
     if data.pside_down == 0:
          ext_sink = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z) 
          ext_sink = geompy.MakeTranslation(ext_sink , (n_active * base_x - ext_sink_x) / 2 ,-100 , -ext_sink_z)
-         return(ext_sink)
+         count = write_partition(count, 6,pro_name,  name = 'Submount')
+         partition = np.append(partition, ext_sink )
 
     elif data.pside_down == 1:
-        if device.au_cap_mat ==0 or device.insul_mat == 0:
-            ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
-            ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40)
-    
-            ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
-            ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z)
-        else:
-            ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
-            ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+40+data.au_cap+data.insul_z)
-    
-            ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
-            ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.au_cap+data.insul_z)
-        return(ext_sink1, ext_sink2)
+        ext_sink1 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,ext_sink_z - 40)
+        ext_sink1 = geompy.MakeTranslation(ext_sink1 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.au_cap+data.insul_z+0.2+40)
+
+        ext_sink2 = geompy.MakeBoxDXDYDZ(ext_sink_x,ext_sink_y,40)
+        ext_sink2 = geompy.MakeTranslation(ext_sink2 , (n_active * base_x - ext_sink_x) / 2 ,-100 , base_z+data.au_cap+data.insul_z+0.2)
+
+        
+        count = write_partition(count, 6,pro_name,  name = 'Submount main')
+        count = write_partition(count, 6, pro_name, name = 'Submount buffer')
+        partition = np.append(partition, ext_sink2) ; partition = np.append(partition, ext_sink1)
+
+    return(partition, count)
 
 
 def find_estop(data):
@@ -472,7 +494,6 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     ridge = create_ridges(data , geompy, middle_y = middle_y)
 
     partition_array = []
-    partition_array2 = []
 
     [base_x , base_y , base_z] = data.device_dim
     [trench_x, trench_y , trench_z] = data.trench_dim
@@ -508,95 +529,52 @@ def create_device ( data, geompy, back_facet_trench = False, middle_y = True, ex
     for i in range( 0 , n_active): #insert all the active regions into the chip
         x_pos = base_x * ( i + 0.5) 
         ridge_cut = geompy.MakeTranslation(ridge , x_pos , 0 , z_pos)
-        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos , 0 ,    base_z - e_stop)
+        ridge_trench_cut = geompy.MakeTranslation(ridge_trench, x_pos, 0, base_z - e_stop)
         base = geompy.MakeCut(base , ridge_cut , True)
         base = geompy.MakeCut(base , ridge_trench_cut , True)
         partition_array = np.append(partition_array, ridge_cut)
-        partition_array2 = np.append(partition_array2, ridge_cut)
-
-
-    
     
     #write the body details of the case.sif file for the ridges
     write_ridge_bodies(data, pro_name)
-    count = n_active * data.n_layers + 1
-
-    if data.au_cap_mat != 0 and data.insul_mat !=0:
-            insul_layer , au_layer, count = create_insulating_layer(data, geompy, base, base_0, e_stop, pro_name, count = count)  
+    
+    count = n_active * data.n_layers + 1 
 
     for i in range ( 0 , n_active+1): #create trenches halfway between each active region
         x_pos = base_x * i
         trench_cut = geompy.MakeTranslation(trench , x_pos , 0 , base_z - trench_z)
         base = geompy.MakeCut(base , trench_cut , True)
-        if data.au_cap_mat!=0:
-            au_trench_cut = geompy.MakeTranslation(au_trench,x_pos , 0 , base_z - trench_z )
-            insul_layer = geompy.MakeCut(insul_layer, au_trench_cut)
-            au_layer = geompy.MakeCut(au_layer, au_trench_cut)
-    
 
     if data.bfm !=0: #create a back facet trench if there is a back facet monitor present
-
-
         bfm_trench_z = trench_z
-
         back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 0) , 20 , bfm_trench_z+10)
         back_facet_trench = geompy.MakeTranslation(back_trench, 0, base_y , base_z -  bfm_trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
         base_0 = geompy.MakeCut(base_0, back_facet_trench, True)
-        if data.au_cap_mat !=0 and data.insul_mat !=0:
-            au_layer = geompy.MakeCut(au_layer, back_facet_trench)
-            insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
+
         back_trench = geompy.MakeBoxDXDYDZ(base_x * (n_active + 1) , 20 , trench_z+10)
         back_facet_trench = geompy.MakeTranslation(back_trench, -base_x/2 , base_y + data.bfm -20, base_z - trench_z )
         base = geompy.MakeCut(base , back_facet_trench , True)
         base_0 = geompy.MakeCut(base_0, back_facet_trench, True)
-        if data.au_cap_mat !=0 and data.insul_mat !=0:
-            au_layer = geompy.MakeCut(au_layer, back_facet_trench)
-            insul_layer = geompy.MakeCut(insul_layer, back_facet_trench)
-
-    if data.au_cap_mat!=0 and data.insul_mat !=0:
-        #partition_array2, count = write_partition(partition_array2, au_layer, count, data.au_cap_mat, pro_name, repeat= 2 * n_active)
-        partition_array = np.append(partition_array, au_layer)
-        if data.current_model ==0:
-            #partition_array2, count = write_partition(partition_array2, insul_layer, count, data.insul_mat, pro_name, repeat= 3 * n_active)
-            partition_array = np.append(partition_array, insul_layer)
-
-    if data.current_model == 1:
-        partition_array, count = create_wirebonds(data, geompy, partition_array, pro_name, count = count)
-
-    if data.arb_param ==1:
-        partition_array, count = create_thick_au_pads(data, geompy, partition_array, pro_name, count)
-        partition_array, count = create_heater(data, geompy, partition_array, pro_name, count)
 
     
     base = geompy.MakeCut(base, base_0) #separate upper and main part of the chip as a viscous layer
 
-    
-    partition_array2, count = write_partition(partition_array2, base, count, data.device_mat, pro_name, name = 'Base buffer')
+    if data.pside_down !=0: 
+        partition_array, count = create_pdown_layer(data, geompy, base, base_0, e_stop, pro_name, count, partition_array)
+
+    count = write_partition(count, data.device_mat, pro_name, name = 'Base buffer')
     partition_array = np.append(partition_array, base)
 
     if data.current_model == 0:
-        partition_array2, count = write_partition(partition_array2, base_0, count, data.device_mat, pro_name, name = 'Base lower')
+        count = write_partition(count, data.device_mat, pro_name, name = 'Base lower')
         partition_array = np.append(partition_array, base_0) 
 
     #add submount or external_heatsink   
-    if device.ext_sink_mat !=0:
-       
-       if device.pside_down == 0:
-            submount = create_submount(data, geompy)
-            partition_array = np.append(partition_array, submount)
-            partition_array2, count = write_partition(partition_array2, submount, count, data.ext_sink_mat, pro_name, name = 'Submount')
 
-       elif device.pside_down == 1: #need a mesh buffer layer if directly connected to the submount for meshing purposes
-           submount1 , submount2 = create_submount(data, geompy)
-           partition_array = create_pdown_layer(data, geompy, base, base_0, e_stop, pro_name, count, partition_array, write = False)
-           partition_array2, count = write_partition(partition_array2, submount1, count, data.ext_sink_mat, pro_name)
-           partition_array2, count = write_partition(partition_array2, submount2, count, data.ext_sink_mat, pro_name)
-           partition_array = np.append(partition_array , submount1)
-           partition_array = np.append(partition_array , submount2)
+    if data.ext_sink_mat !=0:
+        partition_array, count = create_submount(data, geompy, partition_array, count, pro_name)
 
     final_partition = geompy.MakePartition(partition_array.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
-    #final_partition = geompy.MakePartition(partition_array2.tolist(),  [], [], [], geompy.ShapeType["SOLID"], 0, [], 0)
 
     return(final_partition , ridge, count)   
 
@@ -689,12 +667,12 @@ def find_face_of_god(smesh , group_array, data, scc  = False):
         for i  in range(0 , len(group_array)):
                 BBox = smesh.GetBoundingBox(group_array[i])
                 if BBox.minZ == BBox.maxZ: 
+
                     if BBox.minZ < temp_z:
                         temp_z = BBox.minZ
                         f_o_g = i + 1
                     if BBox.maxZ > temp_pz and scc:
                         temp_pz = BBox.MaxZ
-                        f_o_scc = i + 1
         return(int(f_o_g))
     
     elif data.pside_down ==1:
@@ -706,7 +684,6 @@ def find_face_of_god(smesh , group_array, data, scc  = False):
                         f_o_g = i + 1
                     if BBox.maxZ > temp_pz and scc:
                         temp_pz = BBox.MaxZ
-                        f_o_scc = i + 1
         return(int(f_o_g))
     
 def find_wirebonds_of_god(smesh , group_array, data):
@@ -731,8 +708,7 @@ def create_solid_array(Mesh_1 , partition_exploded):
 
 def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
 
-
-    print(f'current model off:{data.current_model}')
+    print(f'SALOME SCRIPT COMMENCING:')
 
     geompy = geomBuilder.New()
     O = geompy.MakeVertex(0, 0, 0)
@@ -752,8 +728,9 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
     #################-----------------------------------------------------------MESHING-------------------------------------------------
     smesh = smeshBuilder.New()
 
+
+
     if data.pside_down ==0:
-        #sub_mesh_auto_group = create_submesh_group(geompy, adams_partition, partition_exploded, [-2, -1])
         ridge_inds = np.arange(0,data.n_ridges * data.n_layers,1).tolist()
         ridge_smag = create_submesh_group(geompy, adams_partition, partition_exploded, ridge_inds)
 
@@ -773,28 +750,31 @@ def new_mesh_ext_sink(data, arg0 ): # (ridge mesh , body mesh)
             Mesh_1, sink_smObj =  NETGEN_submesh(data, Mesh_1, sink_smag, sink = True )
             Mesh_1, ridge_smObj = NETGEN_submesh(data, Mesh_1, ridge_smag, sink= False)
             isDone = Mesh_1.SetMeshOrder( [ [ au_smObj, ins_smObj, sink_smObj, ridge_smObj] ])
-            isDone = Mesh_1.Compute()
+            #isDone = Mesh_1.Compute()
         else:
-            if data.ext_sink_mat !=0:
-                sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-2,-1])
-            else:
-                sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-1])
+
+            sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-3,-1])
             Mesh_1 = NETGEN_create_mesh(data, adams_partition, smesh)
             Mesh_1, ridge_smObj = NETGEN_submesh(data, Mesh_1, ridge_smag, sink= False)
             Mesh_1, sink_smObj =  NETGEN_submesh(data, Mesh_1, sink_smag, sink = True )
+            
             isDone = Mesh_1.SetMeshOrder( [ [ sink_smObj, ridge_smObj] ])
-            isDone = Mesh_1.Compute()
+            #isDone = Mesh_1.Compute()
 
 
     elif data.pside_down ==1:
-        sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-2,-1])
+        ridge_inds = np.arange(0,count - 3,1).tolist()
+        ridge_smag = create_submesh_group(geompy, adams_partition, partition_exploded, ridge_inds)
+        sink_smag = create_submesh_group(geompy, adams_partition, partition_exploded, [-3,-1])
         Mesh_1 = NETGEN_create_mesh(data, adams_partition, smesh)
         Mesh_1, sink_smObj =  NETGEN_submesh(data, Mesh_1, sink_smag, sink = True )
-        #isDone = Mesh_1.Compute()
+        Mesh_1, ridge_smObj = NETGEN_submesh(data, Mesh_1, ridge_smag, sink= False)
+        isDone = Mesh_1.SetMeshOrder( [ [ sink_smObj, ridge_smObj] ])
 
-        #sub_mesh_auto_group = geompy.CreateGroup(adams_partition, geompy.ShapeType["SOLID"])
-        #geompy.UnionList(sub_mesh_auto_group, partition_exploded[-3:-1])
-    
+
+    #isDone = Mesh_1.Compute()
+
+
     add_to_study(geompy, [O,OX,OY,OZ] , multi_ridge, adams_partition, partition_exploded)
 
     
@@ -830,13 +810,15 @@ V = 0 #input variable
 sweeping_V = 0
 
 
-
 pandas_data = pd.read_csv('C:/Projects/Perry_run/input_csv.csv').to_numpy()
 device = MySemiconductor(pandas_data) #put data into MySemiconductor class
 device.device_arb_parameter = -1 #placeholder to have the device ridge slightly not off the edge of the whole thing
 
-device.pside_down = 1 
+device.pside_down = 1
 device.current_model = 0
+device.insul_z = 0.3
+device.au_cap = 2
+device.ext_sink_dim = [2000, 1500, 300]
 
 
 new_mesh_ext_sink(device, arg1)
